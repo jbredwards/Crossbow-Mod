@@ -6,8 +6,9 @@
 package git.jbredwards.crossbow.mod.common;
 
 import com.cleanroommc.assetmover.AssetMoverAPI;
-import com.google.gson.Gson;
+import com.google.common.collect.ImmutableMap;
 import git.jbredwards.crossbow.mod.client.entity.RenderFirework;
+import git.jbredwards.crossbow.mod.client.model.CrossbowArmPose;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowArrowData;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowFireworkData;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowProjectiles;
@@ -15,7 +16,6 @@ import net.minecraft.entity.item.EntityFireworkRocket;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
-import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLConstructionEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -23,9 +23,6 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 import javax.annotation.Nonnull;
-import java.io.InputStreamReader;
-import java.util.Collections;
-import java.util.Objects;
 
 /**
  *
@@ -42,11 +39,34 @@ public final class Crossbow
     @Mod.EventHandler
     static void constructClient(@Nonnull FMLConstructionEvent event) {
         //download vanilla assets
-        final String[][] assets = new Gson().fromJson(new InputStreamReader(Objects.requireNonNull(
-                Loader.class.getResourceAsStream(String.format("/assets/%s/assetmover.jsonc", MODID)))),
-                String[][].class);
+        AssetMoverAPI.fromMinecraft("1.18.2", ImmutableMap.<String, String>builder()
+                .put("assets/minecraft/sounds/item/crossbow/loading_end.ogg", "assets/crossbow/sounds/loading_end.ogg")
+                .put("assets/minecraft/sounds/item/crossbow/loading_middle1.ogg", "assets/crossbow/sounds/loading_middle1.ogg")
+                .put("assets/minecraft/sounds/item/crossbow/loading_middle2.ogg", "assets/crossbow/sounds/loading_middle2.ogg")
+                .put("assets/minecraft/sounds/item/crossbow/loading_middle3.ogg", "assets/crossbow/sounds/loading_middle3.ogg")
+                .put("assets/minecraft/sounds/item/crossbow/loading_middle4.ogg", "assets/crossbow/sounds/loading_middle4.ogg")
+                .put("assets/minecraft/sounds/item/crossbow/loading_start.ogg", "assets/crossbow/sounds/loading_start.ogg")
+                .put("assets/minecraft/sounds/item/crossbow/quick_charge/quick1_1.ogg", "assets/crossbow/sounds/quick_charge/quick1_1.ogg")
+                .put("assets/minecraft/sounds/item/crossbow/quick_charge/quick1_2.ogg", "assets/crossbow/sounds/quick_charge/quick1_2.ogg")
+                .put("assets/minecraft/sounds/item/crossbow/quick_charge/quick1_3.ogg", "assets/crossbow/sounds/quick_charge/quick1_3.ogg")
+                .put("assets/minecraft/sounds/item/crossbow/quick_charge/quick2_1.ogg", "assets/crossbow/sounds/quick_charge/quick2_1.ogg")
+                .put("assets/minecraft/sounds/item/crossbow/quick_charge/quick2_2.ogg", "assets/crossbow/sounds/quick_charge/quick2_2.ogg")
+                .put("assets/minecraft/sounds/item/crossbow/quick_charge/quick2_3.ogg", "assets/crossbow/sounds/quick_charge/quick2_3.ogg")
+                .put("assets/minecraft/sounds/item/crossbow/quick_charge/quick3_1.ogg", "assets/crossbow/sounds/quick_charge/quick3_1.ogg")
+                .put("assets/minecraft/sounds/item/crossbow/quick_charge/quick3_2.ogg", "assets/crossbow/sounds/quick_charge/quick3_2.ogg")
+                .put("assets/minecraft/sounds/item/crossbow/quick_charge/quick3_3.ogg", "assets/crossbow/sounds/quick_charge/quick3_3.ogg")
+                .put("assets/minecraft/sounds/item/crossbow/shoot1.ogg", "assets/crossbow/sounds/shoot1.ogg")
+                .put("assets/minecraft/sounds/item/crossbow/shoot2.ogg", "assets/crossbow/sounds/shoot2.ogg")
+                .put("assets/minecraft/sounds/item/crossbow/shoot3.ogg", "assets/crossbow/sounds/shoot3.ogg")
+                .put("assets/minecraft/textures/item/crossbow_arrow.png", "assets/crossbow/textures/items/crossbow_arrow.png")
+                .put("assets/minecraft/textures/item/crossbow_firework.png", "assets/crossbow/textures/items/crossbow_firework.png")
+                .put("assets/minecraft/textures/item/crossbow_pulling_0.png", "assets/crossbow/textures/items/crossbow_pulling_0.png")
+                .put("assets/minecraft/textures/item/crossbow_pulling_1.png", "assets/crossbow/textures/items/crossbow_pulling_1.png")
+                .put("assets/minecraft/textures/item/crossbow_pulling_2.png", "assets/crossbow/textures/items/crossbow_pulling_2.png")
+                .put("assets/minecraft/textures/item/crossbow_standby.png", "assets/crossbow/textures/items/crossbow_standby.png")
+                .build());
 
-        for(String[] asset : assets) AssetMoverAPI.fromMinecraft(asset[0], Collections.singletonMap(asset[1], asset[2]));
+        CrossbowArmPose.init();
     }
 
     @Mod.EventHandler

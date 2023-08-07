@@ -112,7 +112,7 @@ public interface ICrossbowArrowData
             if(nbtIn instanceof NBTTagCompound) {
                 final NBTTagCompound nbt = (NBTTagCompound)nbtIn;
                 if(nbt.hasKey("HitSound", Constants.NBT.TAG_STRING)) {
-                    instance.setHitSound(Optional.ofNullable(SoundEvent.REGISTRY.getObject(new ResourceLocation(nbt.getString("HitSound")))).orElse(SoundEvents.ENTITY_ARROW_HIT));
+                    Optional.ofNullable(SoundEvent.REGISTRY.getObject(new ResourceLocation(nbt.getString("HitSound")))).ifPresent(instance::setHitSound);
                 }
 
                 if(nbt.hasKey("PierceLevel", Constants.NBT.TAG_ANY_NUMERIC)) {

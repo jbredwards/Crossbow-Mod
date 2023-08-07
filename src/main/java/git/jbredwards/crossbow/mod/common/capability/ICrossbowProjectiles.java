@@ -11,6 +11,7 @@ import git.jbredwards.crossbow.mod.common.capability.util.CapabilityProvider;
 import git.jbredwards.crossbow.mod.common.item.ItemCrossbow;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Items;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemArrow;
 import net.minecraft.item.ItemFirework;
@@ -55,6 +56,8 @@ public interface ICrossbowProjectiles extends List<ItemStack>
                 final ItemStack stack = inventory.getStackInSlot(i);
                 if(isInventoryProjectile(user, stack)) return stack;
             }
+
+            if(((EntityPlayer)user).isCreative()) return new ItemStack(Items.ARROW);
         }
 
         return ItemStack.EMPTY;
@@ -95,7 +98,10 @@ public interface ICrossbowProjectiles extends List<ItemStack>
         public void readNBT(@Nonnull Capability<ICrossbowProjectiles> capability, @Nonnull ICrossbowProjectiles instance, @Nullable EnumFacing side, @Nullable NBTBase nbt) {
             if(nbt instanceof NBTTagList && !nbt.isEmpty()) {
                 final NBTTagList nbtList = (NBTTagList)nbt;
-                for(int i = 0; i < nbtList.tagCount(); i++) instance.set(i, new ItemStack(nbtList.getCompoundTagAt(i)));
+                for(int i = 0; i < nbtList.tagCount(); i++) {
+                    final ItemStack projectile = new ItemStack(nbtList.getCompoundTagAt(i));
+                    instance.add(projectile.isEmpty() ? ItemStack.EMPTY : projectile);
+                }
             }
 
             else instance.clear();

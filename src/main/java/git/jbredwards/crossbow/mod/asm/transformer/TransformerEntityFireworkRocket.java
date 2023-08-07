@@ -5,20 +5,16 @@
 
 package git.jbredwards.crossbow.mod.asm.transformer;
 
+import git.jbredwards.crossbow.mod.asm.ASMHandler;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowFireworkData;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.MoverType;
 import net.minecraft.launchwrapper.IClassTransformer;
-import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.*;
 
 import javax.annotation.Nonnull;
 import java.util.Random;
@@ -45,16 +41,18 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
              * this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
              *
              * New code:
-             * // Remove hardcoded motion if fired by a crossbow
-             * Hooks.move(this, MoverType.SELF, this.motionX, this.motionY, this.motionZ);
+             * // Remove hardcoded velocity if fired by a crossbow
+             * Hooks.correctVelocity(this);
+             * this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
              */
             methods:
             for(final MethodNode method : classNode.methods) {
                 if(method.name.equals(FMLLaunchHandler.isDeobfuscatedEnvironment() ? "onUpdate" : "func_70071_h_")) {
                     for(final AbstractInsnNode insn : method.instructions.toArray()) {
-                        if(insn.getOpcode() == INVOKEVIRTUAL && ((MethodInsnNode)insn).name.equals(FMLLaunchHandler.isDeobfuscatedEnvironment() ? "move" : "func_70091_d")) {
-                            method.instructions.insert(insn, new MethodInsnNode(INVOKESTATIC, "git/jbredwards/crossbow/mod/asm/transformer/TransformerEntityFireworkRocket$Hooks", "move", "(Lnet/minecraft/entity/Entity;Lnet/minecraft/entity/MoverType;DDD)V", false));
-                            method.instructions.remove(insn);
+                        if(insn.getOpcode() == GETSTATIC && ((FieldInsnNode)insn).name.equals("SELF")) {
+                            ASMHandler.LOGGER.debug("transforming - EntityFireworkRocket::onUpdate");
+                            method.instructions.insertBefore(insn, new MethodInsnNode(INVOKESTATIC, "git/jbredwards/crossbow/mod/asm/transformer/TransformerEntityFireworkRocket$Hooks", "correctVelocity", "(Lnet/minecraft/entity/Entity;)V", false));
+                            method.instructions.insertBefore(insn, new VarInsnNode(ALOAD, 0));
                             break methods;
                         }
                     }
@@ -68,6 +66,7 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
              *     Hooks.shoot(this, this.rand, x, y, z, velocity, inaccuracy);
              * }
              */
+            ASMHandler.LOGGER.debug("transforming - EntityFireworkRocket::shoot");
             classNode.interfaces.add("net/minecraft/entity/IProjectile");
             final MethodNode method = new MethodNode(ACC_PUBLIC, FMLLaunchHandler.isDeobfuscatedEnvironment() ? "shoot" : "func_70186_c", "(DDDFF)V", null, null);
             final GeneratorAdapter methodAdapter = new GeneratorAdapter(method, ACC_PUBLIC, method.name, method.desc);
@@ -84,7 +83,7 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
             classNode.methods.add(method);
 
             //writes the changes
-            final ClassWriter writer = new ClassWriter(0);
+            final ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
             classNode.accept(writer);
             return writer.toByteArray();
         }
@@ -94,19 +93,17 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
 
     public static final class Hooks
     {
-        public void move(@Nonnull Entity entity, @Nonnull MoverType type, double x, double y, double z) {
+        public static void correctVelocity(@Nonnull Entity entity) {
             final ICrossbowFireworkData cap = ICrossbowFireworkData.get(entity);
             if(cap != null && cap.wasShotByCrossbow()) {
-                entity.motionX = x /= 1.15;
-                entity.motionY = y -= 0.04;
-                entity.motionZ = z /= 1.15;
+                entity.motionX /= 1.15;
+                entity.motionY -= 0.04;
+                entity.motionZ /= 1.15;
             }
-
-            entity.move(type, x, y, z);
         }
 
         public static void shoot(@Nonnull Entity entity, @Nonnull Random rand, double x, double y, double z, float velocity, float inaccuracy) {
-            final double sqrt = MathHelper.sqrt(x * x + y * y + z * z);
+            final double sqrt = Math.sqrt(x * x + y * y + z * z);
 
             x /= sqrt;
             x += rand.nextGaussian() * 0.0075 * inaccuracy;

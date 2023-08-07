@@ -8,14 +8,19 @@ package git.jbredwards.crossbow.mod.common.init;
 import git.jbredwards.crossbow.mod.common.Crossbow;
 import git.jbredwards.crossbow.mod.common.enchantment.EnchantmentCrossbow;
 import git.jbredwards.crossbow.mod.common.item.ItemCrossbow;
+import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
+import net.minecraftforge.client.event.ModelRegistryEvent;
+import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import javax.annotation.Nonnull;
 
@@ -35,8 +40,14 @@ final class RegistryHandler
     }
 
     @SubscribeEvent
-    static void registerItems(@Nonnull RegistryEvent.Register<Item> event) {
+    static void registerItem(@Nonnull RegistryEvent.Register<Item> event) {
         event.getRegistry().register(new ItemCrossbow().setMaxStackSize(1).setMaxDamage(326).setCreativeTab(CreativeTabs.COMBAT).setRegistryName(Crossbow.MODID, "crossbow").setTranslationKey(Crossbow.MODID + ".crossbow"));
+    }
+
+    @SideOnly(Side.CLIENT)
+    @SubscribeEvent
+    static void registerModel(@Nonnull ModelRegistryEvent event) {
+        ModelLoader.setCustomModelResourceLocation(CrossbowItems.CROSSBOW, 0, new ModelResourceLocation(new ResourceLocation(Crossbow.MODID, "crossbow"), "inventory"));
     }
 
     @SubscribeEvent

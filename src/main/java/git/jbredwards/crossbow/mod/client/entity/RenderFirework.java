@@ -8,7 +8,6 @@ package git.jbredwards.crossbow.mod.client.entity;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowFireworkData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderItem;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.client.renderer.entity.RenderManager;
@@ -31,8 +30,6 @@ import javax.annotation.Nullable;
 @SideOnly(Side.CLIENT)
 public class RenderFirework extends Render<EntityFireworkRocket>
 {
-    @Nonnull
-    protected final RenderItem itemRenderer = Minecraft.getMinecraft().getRenderItem();
     public RenderFirework(@Nonnull RenderManager renderManager) { super(renderManager); }
 
     @Override
@@ -54,7 +51,7 @@ public class RenderFirework extends Render<EntityFireworkRocket>
         }
 
         final ItemStack stack = entity.getDataManager().get(EntityFireworkRocket.FIREWORK_ITEM);
-        itemRenderer.renderItem(stack.isEmpty() ? new ItemStack(Items.FIREWORKS) : stack, ItemCameraTransforms.TransformType.GROUND);
+        Minecraft.getMinecraft().getRenderItem().renderItem(stack.isEmpty() ? new ItemStack(Items.FIREWORKS) : stack, ItemCameraTransforms.TransformType.GROUND);
         if(renderOutlines) {
             GlStateManager.disableOutlineMode();
             GlStateManager.disableColorMaterial();

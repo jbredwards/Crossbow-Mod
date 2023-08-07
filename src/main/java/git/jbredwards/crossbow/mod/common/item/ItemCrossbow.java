@@ -143,9 +143,14 @@ public class ItemCrossbow extends Item
                 final ItemStack projectile = cap.get(i);
                 if(!projectile.isEmpty()) {
                     switch(i) {
-                        case 0: shoot(world, user, crossbow, projectile, soundPitches[i], isCreative, speed, divergence, 0);
-                        case 1: shoot(world, user, crossbow, projectile, soundPitches[i], isCreative, speed, divergence, -10);
-                        case 2: shoot(world, user, crossbow, projectile, soundPitches[i], isCreative, speed, divergence, 10);
+                        case 0:
+                            shoot(world, user, crossbow, projectile, soundPitches[i], isCreative, speed, divergence, 0);
+                            break;
+                        case 1:
+                            shoot(world, user, crossbow, projectile, soundPitches[i], isCreative, speed, divergence, -10);
+                            break;
+                        case 2:
+                            shoot(world, user, crossbow, projectile, soundPitches[i], isCreative, speed, divergence, 10);
                     }
                 }
             }
@@ -155,50 +160,42 @@ public class ItemCrossbow extends Item
     }
 
     protected static void shoot(@Nonnull World world, @Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack projectile, float soundPitch, boolean isCreative, float speed, float divergence, float multishotOffset) {
-        if(!world.isRemote) {
-            final boolean isFirework = projectile.getItem() instanceof ItemFirework;
-            final Entity projectileEntity;
+        final boolean isFirework = projectile.getItem() instanceof ItemFirework;
+        final IProjectile projectileEntity;
 
-            if(isFirework) {
-                projectileEntity = new EntityFireworkRocket(world, user.posX, user.posY + user.getEyeHeight() - 0.15, user.posZ, projectile);
-                final ICrossbowFireworkData fireworkCap = ICrossbowFireworkData.get(projectileEntity);
+        if(isFirework) {
+            projectileEntity = (IProjectile)new EntityFireworkRocket(world, user.posX, user.posY + user.getEyeHeight() - 0.15, user.posZ, projectile);
+            final ICrossbowFireworkData fireworkCap = ICrossbowFireworkData.get((Entity)projectileEntity);
 
-                assert fireworkCap != null; //should always pass
-                fireworkCap.setShotByCrossbow(true);
-            }
-
-            else {
-                final ItemArrow arrowItem = (ItemArrow)(projectile.getItem() instanceof ItemArrow ? projectile.getItem() : Items.ARROW);
-                final EntityArrow arrow = arrowItem.createArrow(world, projectile, user);
-                final ICrossbowArrowData arrowData = ICrossbowArrowData.get(arrow);
-
-                assert arrowData != null; //should always pass
-                arrowData.setHitSound(CrossbowSounds.ITEM_CROSSBOW_HIT);
-                arrowData.setPierceLevel(EnchantmentHelper.getEnchantmentLevel(CrossbowEnchantments.PIERCING, crossbow));
-
-                if(user instanceof EntityPlayer) arrow.setIsCritical(true);
-                if(isCreative || multishotOffset != 0) arrow.pickupStatus = EntityArrow.PickupStatus.CREATIVE_ONLY;
-
-                projectileEntity = arrow;
-            }
-
-            if(user instanceof ICrossbowUser) ((ICrossbowUser)user).shootAtTarget(crossbow, (IProjectile)projectileEntity, multishotOffset);
-            else {
-                final Vec3d vec = user.getLookVec().rotatePitch((float)Math.toRadians(multishotOffset));
-                ((IProjectile)projectileEntity).shoot(vec.x, vec.y, vec.z, speed, divergence);
-
-                /*final double pitch = Math.toRadians(user.rotationPitch);
-                final double yaw = Math.toRadians(user.rotationYaw);
-                final double x = -Math.sin(yaw) * Math.cos(pitch);
-                final double y = -Math.sin(pitch);
-                final double z = Math.cos(yaw) * Math.cos(pitch);*/
-            }
-
-            world.spawnEntity(projectileEntity);
-            world.playSound(null, user.posX, user.posY, user.posZ, CrossbowSounds.ITEM_CROSSBOW_SHOOT, SoundCategory.PLAYERS, 1, soundPitch);
-
-            if(!isCreative) crossbow.damageItem(isFirework ? 3 : 1, user);
+            assert fireworkCap != null; //should always pass
+            fireworkCap.setShotByCrossbow(true);
         }
+
+        else {
+            final ItemArrow arrowItem = (ItemArrow)(projectile.getItem() instanceof ItemArrow ? projectile.getItem() : Items.ARROW);
+            final EntityArrow arrow = arrowItem.createArrow(world, projectile, user);
+            final ICrossbowArrowData arrowData = ICrossbowArrowData.get(arrow);
+
+            assert arrowData != null; //should always pass
+            arrowData.setHitSound(CrossbowSounds.ITEM_CROSSBOW_HIT);
+            arrowData.setPierceLevel(EnchantmentHelper.getEnchantmentLevel(CrossbowEnchantments.PIERCING, crossbow));
+
+            if(user instanceof EntityPlayer) arrow.setIsCritical(true);
+            if(isCreative || multishotOffset != 0) arrow.pickupStatus = EntityArrow.PickupStatus.CREATIVE_ONLY;
+
+            projectileEntity = arrow;
+        }
+
+        if(user instanceof ICrossbowUser) ((ICrossbowUser)user).shootAtTarget(crossbow, projectileEntity, multishotOffset);
+        else {
+            final Vec3d vec = user.getLookVec().rotateYaw((float)Math.toRadians(multishotOffset));
+            projectileEntity.shoot(vec.x, vec.y, vec.z, speed, divergence);
+        }
+
+        world.spawnEntity((Entity)projectileEntity);
+        world.playSound(null, user.posX, user.posY, user.posZ, CrossbowSounds.ITEM_CROSSBOW_SHOOT, SoundCategory.PLAYERS, 1, soundPitch);
+
+        if(!isCreative) crossbow.damageItem(isFirework ? 3 : 1, user);
     }
 
     protected static float[] getSoundPitches(@Nonnull Random random) {
@@ -262,8 +259,7 @@ public class ItemCrossbow extends Item
         if(cap != null && !cap.isEmpty()) {
             final ItemStack projectile = cap.get(0);
             tooltip.add(I18n.format("tooltip.crossbow.crossbow.projectile", projectile.getTextComponent().getFormattedText()));
-
-            if(flagIn.isAdvanced() && projectile.getItem() instanceof ItemFirework) {
+            if(flagIn.isAdvanced()) {
                 final List<String> subTooltip = new LinkedList<>();
                 projectile.getItem().addInformation(projectile, worldIn, subTooltip, flagIn);
                 if(!subTooltip.isEmpty()) tooltip.addAll(subTooltip.stream().map(str -> "  " + TextFormatting.GRAY + str).collect(Collectors.toCollection(LinkedList::new)));
