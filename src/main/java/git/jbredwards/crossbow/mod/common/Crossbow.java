@@ -12,6 +12,8 @@ import git.jbredwards.crossbow.mod.client.model.CrossbowArmPose;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowArrowData;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowFireworkData;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowProjectiles;
+import git.jbredwards.crossbow.mod.common.capability.ICrossbowSoundData;
+import git.jbredwards.crossbow.mod.common.network.MessageSyncFireworkData;
 import net.minecraft.entity.item.EntityFireworkRocket;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.CapabilityManager;
@@ -19,6 +21,8 @@ import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLConstructionEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -32,12 +36,13 @@ import javax.annotation.Nonnull;
 @Mod(modid = Crossbow.MODID, name = Crossbow.NAME, dependencies = "required-client:assetmover@[2.5,);")
 public final class Crossbow
 {
-    @Nonnull
-    public static final String MODID = "crossbow", NAME = "Crossbow";
+    @Nonnull public static final String MODID = "crossbow", NAME = "Crossbow";
+    @Nonnull public static final SimpleNetworkWrapper WRAPPER = NetworkRegistry.INSTANCE.newSimpleChannel(MODID);
 
     @SideOnly(Side.CLIENT)
     @Mod.EventHandler
     static void constructClient(@Nonnull FMLConstructionEvent event) {
+        CrossbowArmPose.init();
         //download vanilla assets
         AssetMoverAPI.fromMinecraft("1.18.2", ImmutableMap.<String, String>builder()
                 .put("assets/minecraft/sounds/item/crossbow/loading_end.ogg", "assets/crossbow/sounds/loading_end.ogg")
@@ -65,8 +70,6 @@ public final class Crossbow
                 .put("assets/minecraft/textures/item/crossbow_pulling_2.png", "assets/crossbow/textures/items/crossbow_pulling_2.png")
                 .put("assets/minecraft/textures/item/crossbow_standby.png", "assets/crossbow/textures/items/crossbow_standby.png")
                 .build());
-
-        CrossbowArmPose.init();
     }
 
     @Mod.EventHandler
@@ -78,6 +81,11 @@ public final class Crossbow
         MinecraftForge.EVENT_BUS.register(ICrossbowFireworkData.class);
         CapabilityManager.INSTANCE.register(ICrossbowProjectiles.class, ICrossbowProjectiles.Storage.INSTANCE, ICrossbowProjectiles.Impl::new);
         MinecraftForge.EVENT_BUS.register(ICrossbowProjectiles.class);
+        CapabilityManager.INSTANCE.register(ICrossbowSoundData.class, ICrossbowSoundData.Storage.INSTANCE, ICrossbowSoundData.Impl::new);
+        MinecraftForge.EVENT_BUS.register(ICrossbowSoundData.class);
+
+        //register packets
+        WRAPPER.registerMessage(MessageSyncFireworkData.Handler.INSTANCE, MessageSyncFireworkData.class, 0, Side.CLIENT);
     }
 
     @SideOnly(Side.CLIENT)

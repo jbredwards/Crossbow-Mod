@@ -27,6 +27,6 @@ public final class CrossbowArmPose
             CHARGE = Objects.requireNonNull(EnumHelper.addEnum(ModelBiped.ArmPose.class, Crossbow.MODID + "_crossbow_charge", new Class[0])),
             HOLD = Objects.requireNonNull(EnumHelper.addEnum(ModelBiped.ArmPose.class, Crossbow.MODID + "_crossbow_hold", new Class[0]));
 
-    // initialize new enums during mod construction
+    // initialize new enums during mod construction to prevent errors down the line
     public static void init() {}
 }

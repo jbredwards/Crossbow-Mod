@@ -5,11 +5,22 @@
 
 package git.jbredwards.crossbow.mod.asm.transformer;
 
+import com.google.common.base.Predicates;
+import git.jbredwards.crossbow.api.event.FireworkImpactEvent;
 import git.jbredwards.crossbow.mod.asm.ASMHandler;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowFireworkData;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.item.EntityFireworkRocket;
 import net.minecraft.launchwrapper.IClassTransformer;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.EntityDamageSourceIndirect;
+import net.minecraft.util.EntitySelectors;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
+import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -17,6 +28,7 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.tree.*;
 
 import javax.annotation.Nonnull;
+import java.util.Comparator;
 import java.util.Random;
 
 /**
@@ -35,25 +47,70 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
             final ClassNode classNode = new ClassNode();
             new ClassReader(basicClass).accept(classNode, 0);
 
-            /*
-             * onUpdate: (changes are around line 158)
-             * Old code:
-             * this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
-             *
-             * New code:
-             * // Remove hardcoded velocity if fired by a crossbow
-             * Hooks.correctVelocity(this);
-             * this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
-             */
             methods:
             for(final MethodNode method : classNode.methods) {
+                // onUpdate
                 if(method.name.equals(FMLLaunchHandler.isDeobfuscatedEnvironment() ? "onUpdate" : "func_70071_h_")) {
                     for(final AbstractInsnNode insn : method.instructions.toArray()) {
+                        /*
+                         * onUpdate: (changes are around line 158)
+                         * Old code:
+                         * this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
+                         *
+                         * New code:
+                         * // Remove hardcoded velocity if fired by a crossbow
+                         * Hooks.correctVelocity(this);
+                         * this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
+                         */
                         if(insn.getOpcode() == GETSTATIC && ((FieldInsnNode)insn).name.equals("SELF")) {
                             ASMHandler.LOGGER.debug("transforming - EntityFireworkRocket::onUpdate");
                             method.instructions.insertBefore(insn, new MethodInsnNode(INVOKESTATIC, "git/jbredwards/crossbow/mod/asm/transformer/TransformerEntityFireworkRocket$Hooks", "correctVelocity", "(Lnet/minecraft/entity/Entity;)V", false));
                             method.instructions.insertBefore(insn, new VarInsnNode(ALOAD, 0));
-                            break methods;
+                        }
+
+                        /*
+                         * onUpdate: (changes are around line 204)
+                         * Old code:
+                         * {
+                         *     ...
+                         * }
+                         *
+                         * New code:
+                         * // Explode on contact with an entity or block
+                         * {
+                         *     ...
+                         *     Hooks.handleCollision(this);
+                         * }
+                         */
+                        else if(insn.getOpcode() == RETURN) {
+                            method.instructions.insertBefore(insn, new VarInsnNode(ALOAD, 0));
+                            method.instructions.insertBefore(insn, new MethodInsnNode(INVOKESTATIC, "git/jbredwards/crossbow/mod/asm/transformer/TransformerEntityFireworkRocket$Hooks", "handleCollision", "(Lnet/minecraft/entity/item/EntityFireworkRocket;)V", false));
+                            break;
+                        }
+                    }
+                }
+
+                /*
+                 * dealExplosionDamage: (changes are around lines 223 & 249)
+                 * Old code:
+                 * this.boostedEntity.attackEntityFrom(DamageSource.FIREWORKS, (float)(5 + nbttaglist.tagCount() * 2));
+                 * ...
+                 * entitylivingbase.attackEntityFrom(DamageSource.FIREWORKS, f1);
+                 *
+                 * New code:
+                 * // Damage source accounts for the shooter
+                 * this.boostedEntity.attackEntityFrom(Hooks.fireworkDamageSource(this), (float)(5 + nbttaglist.tagCount() * 2));
+                 * ...
+                 * entitylivingbase.attackEntityFrom(Hooks.fireworkDamageSource(this), f1);
+                 */
+                else if(method.name.equals(FMLLaunchHandler.isDeobfuscatedEnvironment() ? "dealExplosionDamage" : "func_191510_k")) {
+                    int index = 0;
+                    for(final AbstractInsnNode insn : method.instructions.toArray()) {
+                        if(insn.getOpcode() == GETSTATIC && ((FieldInsnNode)insn).name.equals(FMLLaunchHandler.isDeobfuscatedEnvironment() ? "FIREWORKS" : "field_191552_t")) {
+                            method.instructions.insertBefore(insn, new VarInsnNode(ALOAD, 0));
+                            method.instructions.insertBefore(insn, new MethodInsnNode(INVOKESTATIC, "git/jbredwards/crossbow/mod/asm/transformer/TransformerEntityFireworkRocket$Hooks", "fireworkDamageSource", "(Lnet/minecraft/entity/Entity;)Lnet/minecraft/util/DamageSource;", false));
+                            method.instructions.remove(insn);
+                            if(index ++== 1) break methods;
                         }
                     }
                 }
@@ -102,6 +159,47 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
             }
         }
 
+        @Nonnull
+        public static DamageSource fireworkDamageSource(@Nonnull Entity entity) {
+            final ICrossbowFireworkData cap = ICrossbowFireworkData.get(entity);
+            return cap != null ? new EntityDamageSourceIndirect(DamageSource.FIREWORKS.damageType, entity, cap.getOwner()).setExplosion() : DamageSource.FIREWORKS;
+        }
+
+        @SuppressWarnings({"Guava", "unchecked"})
+        public static void handleCollision(@Nonnull EntityFireworkRocket firework) {
+            if(!firework.noClip && !firework.isDead) {
+                final Vec3d start = new Vec3d(firework.posX, firework.posY, firework.posZ);
+                final Vec3d end = new Vec3d(firework.posX + firework.motionX, firework.posY + firework.motionY, firework.posZ + firework.motionZ);
+                final RayTraceResult trace = firework.ticksExisted < 5
+                        ? firework.world.rayTraceBlocks(start, end, false, true, false)
+                        : firework.world.getEntitiesInAABBexcluding(firework,
+                                firework.getEntityBoundingBox().expand(firework.motionX, firework.motionY, firework.motionZ),
+                                Predicates.and(EntitySelectors.NOT_SPECTATING, EntitySelectors.IS_ALIVE, Entity::canBeCollidedWith))
+                        .stream()
+                        .map(entity -> {
+                            final RayTraceResult collision = entity.getEntityBoundingBox().grow(0.3).calculateIntercept(start, end);
+                            return collision == null ? Pair.of((Entity)null, 0) : Pair.of(entity, start.distanceTo(collision.hitVec));
+                        })
+                        .filter(collision -> collision.getKey() != null)
+                        .min(Comparator.comparingDouble(collision -> collision.getValue().doubleValue()))
+                        .map(entry -> new RayTraceResult(entry.getKey())).orElseGet(() -> firework.world.rayTraceBlocks(start, end, false, true, false));
+
+                if(trace != null && !MinecraftForge.EVENT_BUS.post(new FireworkImpactEvent(firework, trace))) {
+                    if(!firework.world.isRemote) {
+                        if(trace.entityHit == null) {
+                            final IBlockState state = firework.world.getBlockState(trace.getBlockPos());
+                            state.getBlock().onEntityCollision(firework.world, trace.getBlockPos(), state, firework);
+                        }
+
+                        firework.world.setEntityState(firework, (byte)17);
+                        firework.dealExplosionDamage();
+                        firework.setDead();
+                    }
+
+                    firework.isAirBorne = true;
+                }
+            }
+        }
         public static void shoot(@Nonnull Entity entity, @Nonnull Random rand, double x, double y, double z, float velocity, float inaccuracy) {
             final double sqrt = Math.sqrt(x * x + y * y + z * z);
 

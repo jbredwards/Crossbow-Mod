@@ -12,6 +12,7 @@ import javax.annotation.Nonnull;
 
 /**
  *
+ * @since 1.0.0
  * @author jbred
  *
  */

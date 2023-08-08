@@ -18,6 +18,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumHandSide;
 import net.minecraftforge.client.event.RenderSpecificHandEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 
@@ -31,8 +32,44 @@ import javax.annotation.Nonnull;
 @Mod.EventBusSubscriber(modid = Crossbow.MODID, value = Side.CLIENT)
 final class ClientEventHandler
 {
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    static void applyOverrides(@Nonnull RenderSpecificHandEvent event) {
+        final EntityPlayerSP player = Minecraft.getMinecraft().player;
+        final ItemRenderer renderer = Minecraft.getMinecraft().getItemRenderer();
+        final boolean isMainHand = event.getHand() == EnumHand.MAIN_HAND;
+
+        if(player.isHandActive()) {
+            if(ICrossbowProjectiles.get(player.getActiveItemStack()) != null) {
+                final boolean isActiveMainHand = player.getActiveHand() == EnumHand.MAIN_HAND;
+                if(!isActiveMainHand && isMainHand) event.setCanceled(true);
+                else if(isActiveMainHand && !isMainHand) event.setCanceled(true);
+            }
+
+            else if(!isMainHand && player.getActiveHand() == EnumHand.MAIN_HAND) {
+                final ICrossbowProjectiles cap = ICrossbowProjectiles.get(renderer.itemStackOffHand);
+                if(cap != null && !cap.isEmpty()) event.setCanceled(true);
+            }
+        }
+
+        else {
+            if(!isMainHand) {
+                final ICrossbowProjectiles cap = ICrossbowProjectiles.get(renderer.itemStackMainHand);
+                if(cap != null && !cap.isEmpty()) {
+                    event.setCanceled(true);
+                    return;
+                }
+            }
+
+            final ICrossbowProjectiles cap = ICrossbowProjectiles.get(renderer.itemStackOffHand);
+            if(cap != null && !cap.isEmpty()) {
+                if(isMainHand && renderer.itemStackMainHand.isEmpty()) event.setCanceled(true);
+                else if(!isMainHand) event.setCanceled(true);
+            }
+        }
+    }
+
     @SubscribeEvent
-    static void renderHeldItem(@Nonnull RenderSpecificHandEvent event) {
+    static void renderHeldCrossbow(@Nonnull RenderSpecificHandEvent event) {
         final ICrossbowProjectiles cap = event.getItemStack().isEmpty() ? null : ICrossbowProjectiles.get(event.getItemStack());
         if(cap != null) {
             GlStateManager.pushMatrix();

@@ -87,7 +87,7 @@ public final class TransformerModelBiped implements IClassTransformer, Opcodes
                 model.bipedRightArm.rotateAngleY = -0.8f;
                 model.bipedRightArm.rotateAngleX = -0.97079635f;
                 model.bipedLeftArm.rotateAngleX = -0.97079635f;
-                final float angle = MathHelper.clamp(entity.getItemInUseCount(), 0, pullTime);
+                final float angle = MathHelper.clamp(entity.getItemInUseMaxCount(), 0, pullTime);
                 model.bipedLeftArm.rotateAngleY = 0.4f + angle / pullTime * 0.45f;
                 model.bipedLeftArm.rotateAngleX = model.bipedLeftArm.rotateAngleX + angle / pullTime * (-(float)Math.PI / 2 - model.bipedLeftArm.rotateAngleX);
             }
@@ -96,7 +96,7 @@ public final class TransformerModelBiped implements IClassTransformer, Opcodes
                 model.bipedLeftArm.rotateAngleY = 0.8f;
                 model.bipedRightArm.rotateAngleX = -0.97079635f;
                 model.bipedLeftArm.rotateAngleX = -0.97079635f;
-                final float angle = MathHelper.clamp(entity.getItemInUseCount(), 0, pullTime);
+                final float angle = MathHelper.clamp(entity.getItemInUseMaxCount(), 0, pullTime);
                 model.bipedRightArm.rotateAngleY = -0.4f + angle / pullTime * -0.45f;
                 model.bipedRightArm.rotateAngleX = model.bipedLeftArm.rotateAngleX + angle / pullTime * (-(float)Math.PI / 2 - model.bipedLeftArm.rotateAngleX);
             }
