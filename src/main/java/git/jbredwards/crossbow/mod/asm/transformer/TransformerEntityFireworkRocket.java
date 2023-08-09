@@ -49,6 +49,29 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
 
             methods:
             for(final MethodNode method : classNode.methods) {
+                /*
+                 * Constructor: (changes are around lines 40 & 68)
+                 * Old code:
+                 * this.setSize(0.25F, 0.25F);
+                 *
+                 * New code:
+                 * // Disable vanilla collision, this causes fireworks to sometimes skim the sides of blocks
+                 * this.setSize(0.25F, 0.25F);
+                 * this.noClip = true;
+                 */
+                if(method.name.equals("<init>")) {
+                    for(final AbstractInsnNode insn : method.instructions.toArray()) {
+                        if(insn.getOpcode() == INVOKEVIRTUAL && ((MethodInsnNode)insn).name.equals(FMLLaunchHandler.isDeobfuscatedEnvironment() ? "setSize" : "func_70105_a")) {
+                            final InsnList list = new InsnList();
+                            list.add(new VarInsnNode(ALOAD, 0));
+                            list.add(new InsnNode(ICONST_1));
+                            list.add(new FieldInsnNode(PUTFIELD, "net/minecraft/entity/Entity", FMLLaunchHandler.isDeobfuscatedEnvironment() ? "noClip" : "field_70145_X", "Z"));
+                            method.instructions.insert(insn, list);
+                            break;
+                        }
+                    }
+                }
+
                 // onUpdate
                 if(method.name.equals(FMLLaunchHandler.isDeobfuscatedEnvironment() ? "onUpdate" : "func_70071_h_")) {
                     for(final AbstractInsnNode insn : method.instructions.toArray()) {
@@ -167,7 +190,7 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
 
         @SuppressWarnings({"Guava", "unchecked"})
         public static void handleCollision(@Nonnull EntityFireworkRocket firework) {
-            if(!firework.noClip && !firework.isDead) {
+            if(firework.isEntityAlive()) {
                 final Vec3d start = new Vec3d(firework.posX, firework.posY, firework.posZ);
                 final Vec3d end = new Vec3d(firework.posX + firework.motionX, firework.posY + firework.motionY, firework.posZ + firework.motionZ);
                 final RayTraceResult trace = firework.ticksExisted < 5

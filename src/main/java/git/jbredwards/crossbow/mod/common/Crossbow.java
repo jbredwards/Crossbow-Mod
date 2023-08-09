@@ -13,6 +13,7 @@ import git.jbredwards.crossbow.mod.common.capability.ICrossbowArrowData;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowFireworkData;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowProjectiles;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowSoundData;
+import git.jbredwards.crossbow.mod.common.network.MessageSyncArrowData;
 import git.jbredwards.crossbow.mod.common.network.MessageSyncFireworkData;
 import net.minecraft.entity.item.EntityFireworkRocket;
 import net.minecraftforge.common.MinecraftForge;
@@ -85,7 +86,8 @@ public final class Crossbow
         MinecraftForge.EVENT_BUS.register(ICrossbowSoundData.class);
 
         //register packets
-        WRAPPER.registerMessage(MessageSyncFireworkData.Handler.INSTANCE, MessageSyncFireworkData.class, 0, Side.CLIENT);
+        WRAPPER.registerMessage(MessageSyncArrowData.Handler.INSTANCE, MessageSyncArrowData.class, 0, Side.CLIENT);
+        WRAPPER.registerMessage(MessageSyncFireworkData.Handler.INSTANCE, MessageSyncFireworkData.class, 1, Side.CLIENT);
     }
 
     @SideOnly(Side.CLIENT)

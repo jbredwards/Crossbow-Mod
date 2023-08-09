@@ -7,7 +7,6 @@ package git.jbredwards.crossbow.mod.asm.transformer;
 
 import git.jbredwards.crossbow.mod.asm.ASMHandler;
 import git.jbredwards.crossbow.mod.client.model.CrossbowArmPose;
-import git.jbredwards.crossbow.mod.common.item.ItemCrossbow;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -81,7 +80,7 @@ public final class TransformerModelBiped implements IClassTransformer, Opcodes
             if(!(entityIn instanceof EntityLivingBase)) return;
 
             final EntityLivingBase entity = (EntityLivingBase)entityIn;
-            final float pullTime = ItemCrossbow.getPullTime(entity.getActiveItemStack());
+            final float pullTime = entity.getActiveItemStack().getMaxItemUseDuration() - 3;
 
             if(model.rightArmPose == CrossbowArmPose.CHARGE) {
                 model.bipedRightArm.rotateAngleY = -0.8f;

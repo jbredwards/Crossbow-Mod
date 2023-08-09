@@ -30,7 +30,7 @@ public final class ASMHandler implements IFMLLoadingPlugin
     @Override
     public String[] getASMTransformerClass() {
         return new String[] {
-                //"git.jbredwards.crossbow.mod.asm.transformer.TransformerEntityArrow",
+                "git.jbredwards.crossbow.mod.asm.transformer.TransformerEntityArrow",
                 "git.jbredwards.crossbow.mod.asm.transformer.TransformerEntityFireworkRocket",
                 "git.jbredwards.crossbow.mod.asm.transformer.TransformerEntityLivingBase",
                 "git.jbredwards.crossbow.mod.asm.transformer.TransformerModelBiped",

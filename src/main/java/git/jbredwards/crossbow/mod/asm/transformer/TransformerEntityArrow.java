@@ -200,7 +200,7 @@ public final class TransformerEntityArrow implements IClassTransformer, Opcodes
                  */
                 else if(method.name.equals(FMLLaunchHandler.isDeobfuscatedEnvironment() ? "findEntityOnPath" : "func_184551_a")) {
                     for(final AbstractInsnNode insn : method.instructions.toArray()) {
-                        if(insn.getOpcode() == GETFIELD && ((FieldInsnNode)insn).name.equals(FMLLaunchHandler.isDeobfuscatedEnvironment() ? "ARROW_TARGETS" : "field_184553_f")) {
+                        if(insn.getOpcode() == GETSTATIC && ((FieldInsnNode)insn).name.equals(FMLLaunchHandler.isDeobfuscatedEnvironment() ? "ARROW_TARGETS" : "field_184553_f")) {
                             ASMHandler.LOGGER.debug("transforming - EntityArrow::findEntityOnPath");
                             method.instructions.insertBefore(insn, new VarInsnNode(ALOAD, 0));
                             method.instructions.insert(insn, new MethodInsnNode(INVOKESTATIC, "git/jbredwards/crossbow/mod/asm/transformer/TransformerEntityArrow$Hooks", "predicate", "(Lnet/minecraft/entity/Entity;Lcom/google/common/base/Predicate;)Lcom/google/common/base/Predicate;", false));
@@ -248,7 +248,7 @@ public final class TransformerEntityArrow implements IClassTransformer, Opcodes
             }
         }
 
-        @SubscribeEvent(priority = EventPriority.HIGHEST)
+        @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
         public static void cachePiercedEntity(@Nonnull ProjectileImpactEvent.Arrow event) {
             if(event.getRayTraceResult().entityHit != null) {
                 final ICrossbowArrowData cap = ICrossbowArrowData.get(event.getArrow());
@@ -261,6 +261,7 @@ public final class TransformerEntityArrow implements IClassTransformer, Opcodes
                     }
 
                     cap.getPiercedEntities().add(event.getRayTraceResult().entityHit.getEntityId());
+                    if(event.getArrow().world.isRemote) event.setCanceled(true);
                 }
             }
         }

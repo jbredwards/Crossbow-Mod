@@ -7,7 +7,6 @@ package git.jbredwards.crossbow.mod.client;
 
 import git.jbredwards.crossbow.mod.common.Crossbow;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowProjectiles;
-import git.jbredwards.crossbow.mod.common.item.ItemCrossbow;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.GlStateManager;
@@ -89,7 +88,7 @@ final class ClientEventHandler
                 GlStateManager.rotate(armOffset * -9.785f, 0, 0, 1);
 
                 final float useTime = stack.getMaxItemUseDuration() - (player.getItemInUseCount() - event.getPartialTicks() + 1);
-                final float pullTime = Math.min(useTime / ItemCrossbow.getPullTime(stack), 1);
+                final float pullTime = Math.min(useTime / (stack.getMaxItemUseDuration() - 3), 1);
 
                 if(pullTime > 0.1) GlStateManager.translate(0, (pullTime - 0.1) * Math.sin((useTime - 0.1) * 1.3) * 0.004, 0);
                 GlStateManager.translate(0, 0, pullTime * 0.04);

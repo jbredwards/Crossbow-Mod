@@ -11,6 +11,7 @@ import git.jbredwards.crossbow.mod.common.item.ItemCrossbow;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.EnumEnchantmentType;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
@@ -37,6 +38,13 @@ final class RegistryHandler
         event.getRegistry().register(new EnchantmentCrossbow(Enchantment.Rarity.RARE).setMinEnchantability(lvl -> 20).setMaxEnchantability(lvl -> 50).setApplicableCondition(ench -> ench != CrossbowEnchantments.PIERCING).setRegistryName(Crossbow.MODID, "multishot").setName(Crossbow.MODID + ".multishot"));
         event.getRegistry().register(new EnchantmentCrossbow(Enchantment.Rarity.COMMON).setMinEnchantability(lvl -> 1 + (lvl - 1) * 10).setMaxEnchantability(lvl -> 50).setMaxLevel(4).setApplicableCondition(ench -> ench != CrossbowEnchantments.MULTISHOT).setRegistryName(Crossbow.MODID, "piercing").setName(Crossbow.MODID + ".piercing"));
         event.getRegistry().register(new EnchantmentCrossbow(Enchantment.Rarity.UNCOMMON).setMinEnchantability(lvl -> 12 + (lvl - 1) * 20).setMaxEnchantability(lvl -> 50).setMaxLevel(3).setRegistryName(Crossbow.MODID, "quick_charge").setName(Crossbow.MODID + ".quick_charge"));
+
+        final EnumEnchantmentType[] oldTypes = CreativeTabs.COMBAT.getRelevantEnchantmentTypes();
+        final EnumEnchantmentType[] types = new EnumEnchantmentType[oldTypes.length + 1];
+        types[oldTypes.length] = EnchantmentCrossbow.CROSSBOW;
+        System.arraycopy(oldTypes, 0, types, 0, oldTypes.length);
+
+        CreativeTabs.COMBAT.setRelevantEnchantmentTypes(types);
     }
 
     @SubscribeEvent

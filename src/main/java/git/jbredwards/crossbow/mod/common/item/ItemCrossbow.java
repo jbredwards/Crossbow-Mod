@@ -6,7 +6,7 @@
 package git.jbredwards.crossbow.mod.common.item;
 
 import git.jbredwards.crossbow.api.entity.ICrossbowUser;
-import git.jbredwards.crossbow.api.util.QuaternionUtils;
+import git.jbredwards.crossbow.api.util.Quat4dUtils;
 import git.jbredwards.crossbow.mod.common.Crossbow;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowArrowData;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowFireworkData;
@@ -33,7 +33,6 @@ import net.minecraftforge.common.util.EnumHelper;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import org.lwjgl.util.vector.Quaternion;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -91,8 +90,8 @@ public class ItemCrossbow extends Item
             else if(hasAmmo) {
                 final ICrossbowSoundData soundData = ICrossbowSoundData.get(playerIn);
                 if(soundData != null) {
-                    soundData.setPlayedChargeSound(false);
-                    soundData.setPlayedLoadSound(false);
+                    soundData.setPlayedLoadingStartSound(false);
+                    soundData.setPlayedLoadingMiddleSound(false);
                 }
 
                 playerIn.setActiveHand(handIn);
@@ -108,16 +107,15 @@ public class ItemCrossbow extends Item
         if((float)(stack.getMaxItemUseDuration() - timeLeft) / getPullTime(stack) >= 1) {
             final ICrossbowProjectiles cap = ICrossbowProjectiles.get(stack);
             if(cap != null && cap.isEmpty() && loadProjectiles(entityLiving, stack, cap))
-                entityLiving.playSound(CrossbowSounds.ITEM_CROSSBOW_LOADING_END, 1, 1 / (itemRand.nextFloat() * 0.5f + 1) + 0.2f);
+                entityLiving.playSound(getLoadingEndSound(entityLiving, stack), 1, 1 / (itemRand.nextFloat() * 0.5f + 1) + 0.2f);
         }
     }
 
-    protected static boolean loadProjectiles(@Nonnull EntityLivingBase user, @Nonnull ItemStack stack, @Nonnull ICrossbowProjectiles cap) {
-        final int multishot = EnchantmentHelper.getEnchantmentLevel(CrossbowEnchantments.MULTISHOT, stack);
-        final int ammoToLoad = multishot == 0 ? 1 : 3;
-
+    protected static boolean loadProjectiles(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ICrossbowProjectiles cap) {
+        final int ammoToLoad = ((ItemCrossbow)crossbow.getItem()).getAmmoToLoad(user, crossbow);
         final boolean isCreative = user instanceof EntityPlayer && ((EntityPlayer)user).isCreative();
-        ItemStack ammo = cap.findAmmo(user, stack);
+
+        ItemStack ammo = cap.findAmmo(user, crossbow);
         ItemStack ammoCopy = ammo.copy();
 
         for(int ammoLoaded = 0; ammoLoaded < ammoToLoad; ammoLoaded++) {
@@ -148,20 +146,13 @@ public class ItemCrossbow extends Item
         if(!world.isRemote) {
             final float[] soundPitches = getSoundPitches(user.getRNG());
             final boolean isCreative = user instanceof EntityPlayer && ((EntityPlayer)user).isCreative();
+            final double spread = ((ItemCrossbow)crossbow.getItem()).getArrowSpread(user, crossbow) / 2;
 
             for(int i = 0; i < cap.size(); i++) {
                 final ItemStack projectile = cap.get(i);
                 if(!projectile.isEmpty()) {
-                    switch(i) {
-                        case 0:
-                            shoot(world, user, crossbow, projectile, soundPitches[i], isCreative, speed, divergence, 0);
-                            break;
-                        case 1:
-                            shoot(world, user, crossbow, projectile, soundPitches[i], isCreative, speed, divergence, -10);
-                            break;
-                        case 2:
-                            shoot(world, user, crossbow, projectile, soundPitches[i], isCreative, speed, divergence, 10);
-                    }
+                    final double offset = (i & 1) == 0 ? (cap.size() & 1) == 0 ? i + 1 : i : 1 - i - ((cap.size() & 1) == 0 ? 1 : 2);
+                    shoot(world, user, crossbow, projectile, soundPitches[i > 0 ? ((i & 2) >> 1) + 1 : 0], isCreative, speed, divergence, offset * spread);
                 }
             }
         }
@@ -169,7 +160,7 @@ public class ItemCrossbow extends Item
         cap.clear();
     }
 
-    protected static void shoot(@Nonnull World world, @Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack projectile, float soundPitch, boolean isCreative, float speed, float divergence, float multishotOffset) {
+    protected static void shoot(@Nonnull World world, @Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack projectile, float soundPitch, boolean isCreative, float speed, float divergence, double multishotOffset) {
         final boolean isFirework = projectile.getItem() instanceof ItemFirework;
         final IProjectile projectileEntity;
 
@@ -190,8 +181,8 @@ public class ItemCrossbow extends Item
             final ICrossbowArrowData arrowData = ICrossbowArrowData.get(arrow);
 
             assert arrowData != null; // should always pass
-            arrowData.setHitSound(CrossbowSounds.ITEM_CROSSBOW_HIT);
             arrowData.setPierceLevel(EnchantmentHelper.getEnchantmentLevel(CrossbowEnchantments.PIERCING, crossbow));
+            arrowData.setHitSound(((ItemCrossbow)crossbow.getItem()).getArrowHitSound(user, crossbow, arrow, projectile));
 
             if(user instanceof EntityPlayer) arrow.setIsCritical(true);
             if(isCreative || multishotOffset != 0) arrow.pickupStatus = EntityArrow.PickupStatus.CREATIVE_ONLY;
@@ -201,13 +192,12 @@ public class ItemCrossbow extends Item
 
         if(user instanceof ICrossbowUser) ((ICrossbowUser)user).shootAtTarget(crossbow, projectileEntity, multishotOffset);
         else {
-            final Vec3d vec = QuaternionUtils.getMultishotVector(user, multishotOffset);
+            final Vec3d vec = Quat4dUtils.getMultishotVector(user, multishotOffset);
             projectileEntity.shoot(vec.x, vec.y, vec.z, speed, divergence);
+            world.playSound(null, user.posX, user.posY, user.posZ, ((ItemCrossbow)crossbow.getItem()).getShootSound(user, crossbow, projectileEntity, multishotOffset), SoundCategory.PLAYERS, 1, soundPitch);
         }
 
-        world.spawnEntity((Entity)((ItemCrossbow)crossbow.getItem()).customizeProjectile(projectileEntity, projectile, crossbow, user));
-        world.playSound(null, user.posX, user.posY, user.posZ, CrossbowSounds.ITEM_CROSSBOW_SHOOT, SoundCategory.PLAYERS, 1, soundPitch);
-
+        world.spawnEntity((Entity)((ItemCrossbow)crossbow.getItem()).customizeProjectile(user, crossbow, projectileEntity, projectile, soundPitch, isCreative, speed, divergence, multishotOffset));
         if(!isCreative) crossbow.damageItem(isFirework ? 3 : 1, user);
     }
 
@@ -228,28 +218,28 @@ public class ItemCrossbow extends Item
             if(soundData != null) {
                 final float charge = (float)(stack.getMaxItemUseDuration() - count) / getPullTime(stack);
                 if(charge < 0.2) {
-                    soundData.setPlayedChargeSound(false);
-                    soundData.setPlayedLoadSound(false);
+                    soundData.setPlayedLoadingStartSound(false);
+                    soundData.setPlayedLoadingMiddleSound(false);
                     return;
                 }
 
                 final int lvl = EnchantmentHelper.getEnchantmentLevel(CrossbowEnchantments.QUICK_CHARGE, stack);
-                if(charge >= 0.2 && !soundData.getPlayedChargeSound()) {
-                    soundData.setPlayedChargeSound(true);
-                    player.world.playSound(null, player.posX, player.posY, player.posZ, getChargingSound(lvl), player.getSoundCategory(), 0.5f, 1);
+                if(charge >= 0.2 && !soundData.getPlayedLoadingStartSound()) {
+                    soundData.setPlayedLoadingStartSound(true);
+                    player.world.playSound(null, player.posX, player.posY, player.posZ, getLoadingStartSound(player, stack, lvl), player.getSoundCategory(), 0.5f, 1);
                 }
 
-                if(charge >= 0.5 && lvl == 0 && !soundData.getPlayedLoadSound()) {
-                    soundData.setPlayedLoadSound(true);
-                    player.world.playSound(null, player.posX, player.posY, player.posZ, CrossbowSounds.ITEM_CROSSBOW_LOADING_MIDDLE, player.getSoundCategory(), 0.5f, 1);
+                if(charge >= 0.5 && lvl == 0 && !soundData.getPlayedLoadingMiddleSound()) {
+                    soundData.setPlayedLoadingMiddleSound(true);
+                    player.world.playSound(null, player.posX, player.posY, player.posZ, getLoadingMiddleSound(player, stack, lvl), player.getSoundCategory(), 0.5f, 1);
                 }
             }
         }
     }
 
     @Override
-    public int getMaxItemUseDuration(@Nonnull ItemStack stack) { return getPullTime(stack) + 3; }
-    public static int getPullTime(@Nonnull ItemStack stack) {
+    public final int getMaxItemUseDuration(@Nonnull ItemStack stack) { return getPullTime(stack) + 3; }
+    public int getPullTime(@Nonnull ItemStack stack) {
         final int lvl = EnchantmentHelper.getEnchantmentLevel(CrossbowEnchantments.QUICK_CHARGE, stack);
         return lvl == 0 ? 25 : 25 - 5 * lvl;
     }
@@ -257,16 +247,6 @@ public class ItemCrossbow extends Item
     @Nonnull
     @Override
     public EnumAction getItemUseAction(@Nonnull ItemStack stack) { return ACTION; }
-
-    @Nonnull
-    protected SoundEvent getChargingSound(int quickChargeEnchLvl) {
-        switch(quickChargeEnchLvl) {
-            case 1: return CrossbowSounds.ITEM_CROSSBOW_QUICK_CHARGE_1;
-            case 2: return CrossbowSounds.ITEM_CROSSBOW_QUICK_CHARGE_2;
-            case 3: return CrossbowSounds.ITEM_CROSSBOW_QUICK_CHARGE_3;
-            default: return CrossbowSounds.ITEM_CROSSBOW_LOADING_START;
-        }
-    }
 
     @SideOnly(Side.CLIENT)
     @Override
@@ -286,9 +266,57 @@ public class ItemCrossbow extends Item
     @Override
     public int getItemEnchantability() { return 1; }
 
+    // ==============================
+    // FUNCTIONS FOR CUSTOM CROSSBOWS
+    // ==============================
+
     /**
-     * Exists in case someone wants to make an addon mod
+     * @return the angle separating each arrow (in degrees).
+     */
+    public double getArrowSpread(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow) { return 10; }
+
+    /**
+     * Exists in case someone wants to make an addon mod that adds crossbows that fire a special amount of projectiles.
+     */
+    public int getAmmoToLoad(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow) {
+        return EnchantmentHelper.getEnchantmentLevel(CrossbowEnchantments.MULTISHOT, crossbow) > 0 ? 3 : 1;
+    }
+
+    @Nonnull
+    public SoundEvent getArrowHitSound(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull EntityArrow arrow, @Nonnull ItemStack arrowStack) {
+        return CrossbowSounds.ITEM_CROSSBOW_HIT;
+    }
+
+    @Nonnull
+    public SoundEvent getLoadingEndSound(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow) {
+        return CrossbowSounds.ITEM_CROSSBOW_LOADING_END;
+    }
+
+    @Nonnull
+    public SoundEvent getLoadingMiddleSound(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, int quickChargeEnchLvl) {
+        return CrossbowSounds.ITEM_CROSSBOW_LOADING_MIDDLE;
+    }
+
+    @Nonnull
+    public SoundEvent getLoadingStartSound(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, int quickChargeEnchLvl) {
+        switch(quickChargeEnchLvl) {
+            case 1: return CrossbowSounds.ITEM_CROSSBOW_QUICK_CHARGE_1;
+            case 2: return CrossbowSounds.ITEM_CROSSBOW_QUICK_CHARGE_2;
+            case 3: return CrossbowSounds.ITEM_CROSSBOW_QUICK_CHARGE_3;
+            default: return CrossbowSounds.ITEM_CROSSBOW_LOADING_START;
+        }
+    }
+
+    @Nonnull
+    public SoundEvent getShootSound(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull IProjectile projectile, double multishotOffset) {
+        return CrossbowSounds.ITEM_CROSSBOW_SHOOT;
+    }
+
+    /**
+     * Exists in case someone wants to make an addon mod that adds crossbows that add special properties to projectiles.
      */
     @Nonnull
-    public IProjectile customizeProjectile(@Nonnull IProjectile projectile, @Nonnull ItemStack projectileStack, @Nonnull ItemStack crossbow, @Nonnull EntityLivingBase user) { return projectile; }
+    public IProjectile customizeProjectile(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull IProjectile projectile, @Nonnull ItemStack projectileStack, float soundPitch, boolean isCreative, float speed, float divergence, double multishotOffset) {
+        return projectile;
+    }
 }

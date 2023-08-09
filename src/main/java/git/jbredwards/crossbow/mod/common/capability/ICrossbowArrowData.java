@@ -7,9 +7,11 @@ package git.jbredwards.crossbow.mod.common.capability;
 
 import git.jbredwards.crossbow.mod.common.Crossbow;
 import git.jbredwards.crossbow.mod.common.capability.util.CapabilityProvider;
+import git.jbredwards.crossbow.mod.common.network.MessageSyncArrowData;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.nbt.NBTBase;
@@ -22,6 +24,7 @@ import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import javax.annotation.Nonnull;
@@ -59,6 +62,14 @@ public interface ICrossbowArrowData
     @SubscribeEvent
     static void attach(@Nonnull AttachCapabilitiesEvent<Entity> event) {
         if(event.getObject() instanceof EntityArrow) event.addCapability(CAPABILITY_ID, new CapabilityProvider<>(CAPABILITY));
+    }
+
+    @SubscribeEvent
+    static void sync(@Nonnull PlayerEvent.StartTracking event) {
+        if(event.getEntityPlayer() instanceof EntityPlayerMP) {
+            final ICrossbowArrowData cap = get(event.getTarget());
+            if(cap != null) Crossbow.WRAPPER.sendTo(new MessageSyncArrowData(event.getTarget().getEntityId(), cap.getPierceLevel()), (EntityPlayerMP)event.getEntityPlayer());
+        }
     }
 
     class Impl implements ICrossbowArrowData

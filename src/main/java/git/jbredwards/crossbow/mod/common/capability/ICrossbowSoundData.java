@@ -34,11 +34,11 @@ public interface ICrossbowSoundData
     @Nonnull Capability<ICrossbowSoundData> CAPABILITY = null;
     @Nonnull ResourceLocation CAPABILITY_ID = new ResourceLocation(Crossbow.MODID, "crossbow_sound_data");
 
-    boolean getPlayedChargeSound();
-    void setPlayedChargeSound(boolean playChargeSoundIn);
+    boolean getPlayedLoadingStartSound();
+    void setPlayedLoadingStartSound(boolean playChargeSoundIn);
 
-    boolean getPlayedLoadSound();
-    void setPlayedLoadSound(boolean playLoadSoundIn);
+    boolean getPlayedLoadingMiddleSound();
+    void setPlayedLoadingMiddleSound(boolean playLoadSoundIn);
 
     @Nullable
     static ICrossbowSoundData get(@Nullable ICapabilityProvider provider) {
@@ -55,16 +55,16 @@ public interface ICrossbowSoundData
         protected boolean playedChargeSound, playedLoadSound;
 
         @Override
-        public boolean getPlayedChargeSound() { return playedChargeSound; }
+        public boolean getPlayedLoadingStartSound() { return playedChargeSound; }
 
         @Override
-        public void setPlayedChargeSound(boolean playedChargeSoundIn) { playedChargeSound = playedChargeSoundIn; }
+        public void setPlayedLoadingStartSound(boolean playedChargeSoundIn) { playedChargeSound = playedChargeSoundIn; }
 
         @Override
-        public boolean getPlayedLoadSound() { return playedLoadSound; }
+        public boolean getPlayedLoadingMiddleSound() { return playedLoadSound; }
 
         @Override
-        public void setPlayedLoadSound(boolean playedLoadSoundIn) { playedLoadSound = playedLoadSoundIn; }
+        public void setPlayedLoadingMiddleSound(boolean playedLoadSoundIn) { playedLoadSound = playedLoadSoundIn; }
     }
 
     enum Storage implements Capability.IStorage<ICrossbowSoundData>
