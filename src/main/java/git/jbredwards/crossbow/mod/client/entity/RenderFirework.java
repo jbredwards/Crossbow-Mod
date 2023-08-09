@@ -5,7 +5,6 @@
 
 package git.jbredwards.crossbow.mod.client.entity;
 
-import git.jbredwards.crossbow.mod.common.capability.ICrossbowFireworkData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
@@ -16,6 +15,7 @@ import net.minecraft.entity.item.EntityFireworkRocket;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -37,12 +37,15 @@ public class RenderFirework extends Render<EntityFireworkRocket>
         GlStateManager.pushMatrix();
         GlStateManager.translate(x, y, z);
         GlStateManager.enableRescaleNormal();
-        GlStateManager.rotate(-renderManager.playerViewY, 0, 1, 0);
-        GlStateManager.rotate((renderManager.options.thirdPersonView == 2 ? -1 : 1) * renderManager.playerViewX, 1, 0, 0);
 
-        final ICrossbowFireworkData cap = ICrossbowFireworkData.get(entity);
-        if(cap == null || !cap.wasShotByCrossbow()) GlStateManager.rotate(180, 0, 1, 0);
-        else GlStateManager.rotate(90, 1, 0, 0);
+        //GlStateManager.rotate(-renderManager.playerViewY, 0, 1, 0);
+        //GlStateManager.rotate((renderManager.options.thirdPersonView == 2 ? -1 : 1) * renderManager.playerViewX, 1, 0, 0);
+
+        GlStateManager.rotate((float)(Math.toDegrees(MathHelper.atan2(entity.motionX, entity.motionZ))), 0, 1, 0);
+        GlStateManager.rotate((float)(Math.toDegrees(MathHelper.atan2(entity.motionY, Math.sqrt(entity.motionX * entity.motionX + entity.motionZ * entity.motionZ)))), 1, 0, 0);
+
+        GlStateManager.rotate(-90, 0, 1, 0);
+        GlStateManager.rotate(-45, 0, 0, 1);
 
         bindEntityTexture(entity);
         if(renderOutlines) {
@@ -59,6 +62,7 @@ public class RenderFirework extends Render<EntityFireworkRocket>
 
         GlStateManager.disableRescaleNormal();
         GlStateManager.popMatrix();
+
         super.doRender(entity, x, y, z, entityYaw, partialTicks);
     }
 

@@ -6,6 +6,7 @@
 package git.jbredwards.crossbow.mod.common.item;
 
 import git.jbredwards.crossbow.api.entity.ICrossbowUser;
+import git.jbredwards.crossbow.api.util.QuaternionUtils;
 import git.jbredwards.crossbow.mod.common.Crossbow;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowArrowData;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowFireworkData;
@@ -32,6 +33,7 @@ import net.minecraftforge.common.util.EnumHelper;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.lwjgl.util.vector.Quaternion;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -199,7 +201,7 @@ public class ItemCrossbow extends Item
 
         if(user instanceof ICrossbowUser) ((ICrossbowUser)user).shootAtTarget(crossbow, projectileEntity, multishotOffset);
         else {
-            final Vec3d vec = getMultishotVec(user, multishotOffset);
+            final Vec3d vec = QuaternionUtils.getMultishotVector(user, multishotOffset);
             projectileEntity.shoot(vec.x, vec.y, vec.z, speed, divergence);
         }
 
@@ -207,11 +209,6 @@ public class ItemCrossbow extends Item
         world.playSound(null, user.posX, user.posY, user.posZ, CrossbowSounds.ITEM_CROSSBOW_SHOOT, SoundCategory.PLAYERS, 1, soundPitch);
 
         if(!isCreative) crossbow.damageItem(isFirework ? 3 : 1, user);
-    }
-
-    @Nonnull
-    public static Vec3d getMultishotVec(@Nonnull EntityLivingBase user, float multishotOffset) {
-
     }
 
     protected static float[] getSoundPitches(@Nonnull Random random) {
