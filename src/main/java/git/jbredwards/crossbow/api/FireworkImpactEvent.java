@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-package git.jbredwards.crossbow.api.event;
+package git.jbredwards.crossbow.api;
 
 import net.minecraft.entity.item.EntityFireworkRocket;
 import net.minecraft.util.math.RayTraceResult;

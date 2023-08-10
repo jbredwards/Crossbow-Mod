@@ -3,9 +3,8 @@
  * All rights reserved.
  */
 
-package git.jbredwards.crossbow.api.entity;
+package git.jbredwards.crossbow.api;
 
-import git.jbredwards.crossbow.api.util.Quat4dUtils;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowProjectiles;
 import git.jbredwards.crossbow.mod.common.item.ItemCrossbow;
 import net.minecraft.entity.Entity;
@@ -39,7 +38,7 @@ public interface ICrossbowUser
 
         final Vec3d velocity = Quat4dUtils.getMultishotVector(user, new Vec3d(x, y, z), multishotOffset);
         projectile.shoot(velocity.x, velocity.y, velocity.z, 1.6f, 14 - user.world.getDifficulty().getId() * 4);
-        user.playSound(((ItemCrossbow)crossbow.getItem()).getShootSound(user, crossbow, projectile, multishotOffset), 1, 1 / (user.getRNG().nextFloat() * 0.4f + 0.8f));
+        user.playSound(((ICrossbow)crossbow.getItem()).getShootSound(user, crossbow, projectile, multishotOffset), 1, 1 / (user.getRNG().nextFloat() * 0.4f + 0.8f));
     }
 
     default void performAICrossbowAttack(@Nonnull EntityLivingBase user, float velocity) {

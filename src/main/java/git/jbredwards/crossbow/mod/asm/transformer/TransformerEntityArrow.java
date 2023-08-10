@@ -261,7 +261,7 @@ public final class TransformerEntityArrow implements IClassTransformer, Opcodes
                     }
 
                     cap.getPiercedEntities().add(event.getRayTraceResult().entityHit.getEntityId());
-                    if(event.getArrow().world.isRemote) event.setCanceled(true);
+                    if(event.getArrow().world.isRemote) event.setCanceled(true); //fixes a weird arrow motion desync
                 }
             }
         }

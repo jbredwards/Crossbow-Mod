@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-package git.jbredwards.crossbow.api.util;
+package git.jbredwards.crossbow.api;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.Vec3d;

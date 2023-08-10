@@ -5,8 +5,8 @@
 
 package git.jbredwards.crossbow.mod.asm.transformer;
 
+import git.jbredwards.crossbow.api.ICrossbow;
 import git.jbredwards.crossbow.mod.asm.ASMHandler;
-import git.jbredwards.crossbow.mod.common.item.ItemCrossbow;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.launchwrapper.IClassTransformer;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
@@ -74,7 +74,7 @@ public final class TransformerEntityLivingBase implements IClassTransformer, Opc
     public static final class Hooks
     {
         public static boolean isCrossbow(boolean isRemote, @Nonnull EntityLivingBase entity) {
-            return isRemote || entity.getActiveItemStack().getItem() instanceof ItemCrossbow;
+            return isRemote || entity.getActiveItemStack().getItem() instanceof ICrossbow;
         }
     }
 }

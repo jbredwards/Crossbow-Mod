@@ -5,21 +5,14 @@
 
 package git.jbredwards.crossbow.mod.common.capability;
 
-import git.jbredwards.crossbow.api.entity.ICrossbowUser;
+import git.jbredwards.crossbow.api.ICrossbow;
 import git.jbredwards.crossbow.mod.common.Crossbow;
 import git.jbredwards.crossbow.mod.common.capability.util.CapabilityProvider;
-import git.jbredwards.crossbow.mod.common.item.ItemCrossbow;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Items;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.item.ItemArrow;
-import net.minecraft.item.ItemFirework;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
@@ -46,29 +39,7 @@ public interface ICrossbowProjectiles extends List<ItemStack>
 
     @Nonnull
     default ItemStack findAmmo(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow) {
-        if(user instanceof ICrossbowUser) return ((ICrossbowUser)user).findAmmo(crossbow);
-        else if(isHeldProjectile(user, user.getHeldItem(EnumHand.OFF_HAND))) return user.getHeldItem(EnumHand.OFF_HAND);
-        else if(isHeldProjectile(user, user.getHeldItem(EnumHand.MAIN_HAND))) return user.getHeldItem(EnumHand.MAIN_HAND);
-
-        if(user instanceof EntityPlayer) {
-            final IInventory inventory = ((EntityPlayer)user).inventory;
-            for(int i = 0; i < inventory.getSizeInventory(); ++i) {
-                final ItemStack stack = inventory.getStackInSlot(i);
-                if(isInventoryProjectile(user, stack)) return stack;
-            }
-
-            if(((EntityPlayer)user).isCreative()) return new ItemStack(Items.ARROW);
-        }
-
-        return ItemStack.EMPTY;
-    }
-
-    default boolean isHeldProjectile(@Nonnull EntityLivingBase user, @Nonnull ItemStack stack) {
-        return isInventoryProjectile(user, stack) || stack.getItem() instanceof ItemFirework;
-    }
-
-    default boolean isInventoryProjectile(@Nonnull EntityLivingBase user, @Nonnull ItemStack stack) {
-        return stack.getItem() instanceof ItemArrow;
+        return ((ICrossbow)crossbow.getItem()).findAmmo(user, crossbow);
     }
 
     @Nullable
@@ -78,7 +49,7 @@ public interface ICrossbowProjectiles extends List<ItemStack>
 
     @SubscribeEvent
     static void attach(@Nonnull AttachCapabilitiesEvent<ItemStack> event) {
-        if(event.getObject().getItem() instanceof ItemCrossbow) event.addCapability(CAPABILITY_ID, new CapabilityProvider<>(CAPABILITY));
+        if(event.getObject().getItem() instanceof ICrossbow) event.addCapability(CAPABILITY_ID, new CapabilityProvider<>(CAPABILITY));
     }
 
     class Impl extends ArrayList<ItemStack> implements ICrossbowProjectiles {}

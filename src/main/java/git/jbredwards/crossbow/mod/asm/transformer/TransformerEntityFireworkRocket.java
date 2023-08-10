@@ -6,7 +6,7 @@
 package git.jbredwards.crossbow.mod.asm.transformer;
 
 import com.google.common.base.Predicates;
-import git.jbredwards.crossbow.api.event.FireworkImpactEvent;
+import git.jbredwards.crossbow.api.FireworkImpactEvent;
 import git.jbredwards.crossbow.mod.asm.ASMHandler;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowFireworkData;
 import net.minecraft.block.state.IBlockState;
@@ -45,7 +45,7 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
         // EntityFireworkRocket
         if("net.minecraft.entity.item.EntityFireworkRocket".equals(transformedName)) {
             final ClassNode classNode = new ClassNode();
-            new ClassReader(basicClass).accept(classNode, 0);
+            new ClassReader(basicClass).accept(classNode, ClassReader.SKIP_FRAMES);
 
             methods:
             for(final MethodNode method : classNode.methods) {
@@ -62,6 +62,7 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
                 if(method.name.equals("<init>")) {
                     for(final AbstractInsnNode insn : method.instructions.toArray()) {
                         if(insn.getOpcode() == INVOKEVIRTUAL && ((MethodInsnNode)insn).name.equals(FMLLaunchHandler.isDeobfuscatedEnvironment() ? "setSize" : "func_70105_a")) {
+                            ASMHandler.LOGGER.debug("transforming - EntityFireworkRocket::<init>");
                             final InsnList list = new InsnList();
                             list.add(new VarInsnNode(ALOAD, 0));
                             list.add(new InsnNode(ICONST_1));
@@ -130,10 +131,11 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
                     int index = 0;
                     for(final AbstractInsnNode insn : method.instructions.toArray()) {
                         if(insn.getOpcode() == GETSTATIC && ((FieldInsnNode)insn).name.equals(FMLLaunchHandler.isDeobfuscatedEnvironment() ? "FIREWORKS" : "field_191552_t")) {
+                            if(index ++== 0) ASMHandler.LOGGER.debug("transforming - EntityFireworkRocket::dealExplosionDamage");
                             method.instructions.insertBefore(insn, new VarInsnNode(ALOAD, 0));
                             method.instructions.insertBefore(insn, new MethodInsnNode(INVOKESTATIC, "git/jbredwards/crossbow/mod/asm/transformer/TransformerEntityFireworkRocket$Hooks", "fireworkDamageSource", "(Lnet/minecraft/entity/Entity;)Lnet/minecraft/util/DamageSource;", false));
                             method.instructions.remove(insn);
-                            if(index ++== 1) break methods;
+                            if(index == 2) break methods;
                         }
                     }
                 }
@@ -163,7 +165,7 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
             classNode.methods.add(method);
 
             //writes the changes
-            final ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+            final ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
             classNode.accept(writer);
             return writer.toByteArray();
         }
@@ -193,11 +195,10 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
             if(firework.isEntityAlive()) {
                 final Vec3d start = new Vec3d(firework.posX, firework.posY, firework.posZ);
                 final Vec3d end = new Vec3d(firework.posX + firework.motionX, firework.posY + firework.motionY, firework.posZ + firework.motionZ);
-                final RayTraceResult trace = firework.ticksExisted < 5
-                        ? firework.world.rayTraceBlocks(start, end, false, true, false)
-                        : firework.world.getEntitiesInAABBexcluding(firework,
-                                firework.getEntityBoundingBox().expand(firework.motionX, firework.motionY, firework.motionZ),
-                                Predicates.and(EntitySelectors.NOT_SPECTATING, EntitySelectors.IS_ALIVE, Entity::canBeCollidedWith))
+
+                final ICrossbowFireworkData cap = ICrossbowFireworkData.get(firework);
+                final RayTraceResult trace = firework.world.getEntitiesInAABBexcluding(firework, firework.getEntityBoundingBox().expand(firework.motionX, firework.motionY, firework.motionZ),
+                                Predicates.and(EntitySelectors.NOT_SPECTATING, EntitySelectors.IS_ALIVE, entity -> entity.canBeCollidedWith() && (firework.ticksExisted > 5 || cap == null || cap.getOwner() != entity)))
                         .stream()
                         .map(entity -> {
                             final RayTraceResult collision = entity.getEntityBoundingBox().grow(0.3).calculateIntercept(start, end);

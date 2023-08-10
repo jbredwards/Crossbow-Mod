@@ -36,7 +36,7 @@ public final class TransformerModelBiped implements IClassTransformer, Opcodes
         // ModelBiped
         if("net.minecraft.client.model.ModelBiped".equals(transformedName)) {
             final ClassNode classNode = new ClassNode();
-            new ClassReader(basicClass).accept(classNode, 0);
+            new ClassReader(basicClass).accept(classNode, ClassReader.SKIP_FRAMES);
 
             /*
              * setRotationAngles: (changes are around line 280)
@@ -65,7 +65,8 @@ public final class TransformerModelBiped implements IClassTransformer, Opcodes
                 }
             }
 
-            final ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+            //writes the changes
+            final ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
             classNode.accept(writer);
             return writer.toByteArray();
         }

@@ -5,31 +5,27 @@
 
 package git.jbredwards.crossbow.mod.common.item;
 
-import git.jbredwards.crossbow.api.entity.ICrossbowUser;
-import git.jbredwards.crossbow.api.util.Quat4dUtils;
+import git.jbredwards.crossbow.api.ICrossbow;
 import git.jbredwards.crossbow.mod.common.Crossbow;
-import git.jbredwards.crossbow.mod.common.capability.ICrossbowArrowData;
-import git.jbredwards.crossbow.mod.common.capability.ICrossbowFireworkData;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowProjectiles;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowSoundData;
 import git.jbredwards.crossbow.mod.common.init.CrossbowEnchantments;
-import git.jbredwards.crossbow.mod.common.init.CrossbowSounds;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.IProjectile;
-import net.minecraft.entity.item.EntityFireworkRocket;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.init.Items;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.item.EnumAction;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemFirework;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.EnumHelper;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -38,7 +34,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -47,11 +42,8 @@ import java.util.stream.Collectors;
  * @author jbred
  *
  */
-public class ItemCrossbow extends Item
+public class ItemCrossbow extends Item implements ICrossbow
 {
-    @Nonnull
-    public static final EnumAction ACTION = Objects.requireNonNull(EnumHelper.addAction(Crossbow.MODID + "_crossbow"));
-
     public ItemCrossbow() {
         addPropertyOverride(new ResourceLocation(Crossbow.MODID, "pull"), (stack, world, entity) -> {
             if(entity == null) return 0;
@@ -112,7 +104,7 @@ public class ItemCrossbow extends Item
     }
 
     protected static boolean loadProjectiles(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ICrossbowProjectiles cap) {
-        final int ammoToLoad = ((ItemCrossbow)crossbow.getItem()).getAmmoToLoad(user, crossbow);
+        final int ammoToLoad = ((ICrossbow)crossbow.getItem()).getAmmoToLoad(user, crossbow);
         final boolean isCreative = user instanceof EntityPlayer && ((EntityPlayer)user).isCreative();
 
         ItemStack ammo = cap.findAmmo(user, crossbow);
@@ -146,59 +138,18 @@ public class ItemCrossbow extends Item
         if(!world.isRemote) {
             final float[] soundPitches = getSoundPitches(user.getRNG());
             final boolean isCreative = user instanceof EntityPlayer && ((EntityPlayer)user).isCreative();
-            final double spread = ((ItemCrossbow)crossbow.getItem()).getArrowSpread(user, crossbow) / 2;
+            final double spread = ((ICrossbow)crossbow.getItem()).getArrowSpread(user, crossbow) / 2;
 
             for(int i = 0; i < cap.size(); i++) {
                 final ItemStack projectile = cap.get(i);
                 if(!projectile.isEmpty()) {
                     final double offset = (i & 1) == 0 ? (cap.size() & 1) == 0 ? i + 1 : i : 1 - i - ((cap.size() & 1) == 0 ? 1 : 2);
-                    shoot(world, user, crossbow, projectile, soundPitches[i > 0 ? ((i & 2) >> 1) + 1 : 0], isCreative, speed, divergence, offset * spread);
+                    ((ICrossbow)crossbow.getItem()).shoot(world, user, crossbow, projectile, soundPitches[i > 0 ? ((i & 2) >> 1) + 1 : 0], isCreative, speed, divergence, offset * spread);
                 }
             }
         }
 
         cap.clear();
-    }
-
-    protected static void shoot(@Nonnull World world, @Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack projectile, float soundPitch, boolean isCreative, float speed, float divergence, double multishotOffset) {
-        final boolean isFirework = projectile.getItem() instanceof ItemFirework;
-        final IProjectile projectileEntity;
-
-        if(isFirework) {
-            projectileEntity = (IProjectile)new EntityFireworkRocket(world, user.posX, user.posY + user.getEyeHeight() - 0.15, user.posZ, projectile);
-            final ICrossbowFireworkData fireworkCap = ICrossbowFireworkData.get((Entity)projectileEntity);
-            assert fireworkCap != null; // should always pass
-            fireworkCap.setOwner(user);
-            fireworkCap.setShotByCrossbow(true);
-        }
-
-        else {
-            // forge event hook
-            if(user instanceof EntityPlayer && ForgeEventFactory.onArrowLoose(crossbow, world, (EntityPlayer)user, 1, true) < 0) return;
-
-            final ItemArrow arrowItem = (ItemArrow)(projectile.getItem() instanceof ItemArrow ? projectile.getItem() : Items.ARROW);
-            final EntityArrow arrow = arrowItem.createArrow(world, projectile, user);
-            final ICrossbowArrowData arrowData = ICrossbowArrowData.get(arrow);
-
-            assert arrowData != null; // should always pass
-            arrowData.setPierceLevel(EnchantmentHelper.getEnchantmentLevel(CrossbowEnchantments.PIERCING, crossbow));
-            arrowData.setHitSound(((ItemCrossbow)crossbow.getItem()).getArrowHitSound(user, crossbow, arrow, projectile));
-
-            if(user instanceof EntityPlayer) arrow.setIsCritical(true);
-            if(isCreative || multishotOffset != 0) arrow.pickupStatus = EntityArrow.PickupStatus.CREATIVE_ONLY;
-
-            projectileEntity = arrow;
-        }
-
-        if(user instanceof ICrossbowUser) ((ICrossbowUser)user).shootAtTarget(crossbow, projectileEntity, multishotOffset);
-        else {
-            final Vec3d vec = Quat4dUtils.getMultishotVector(user, multishotOffset);
-            projectileEntity.shoot(vec.x, vec.y, vec.z, speed, divergence);
-            world.playSound(null, user.posX, user.posY, user.posZ, ((ItemCrossbow)crossbow.getItem()).getShootSound(user, crossbow, projectileEntity, multishotOffset), SoundCategory.PLAYERS, 1, soundPitch);
-        }
-
-        world.spawnEntity((Entity)((ItemCrossbow)crossbow.getItem()).customizeProjectile(user, crossbow, projectileEntity, projectile, soundPitch, isCreative, speed, divergence, multishotOffset));
-        if(!isCreative) crossbow.damageItem(isFirework ? 3 : 1, user);
     }
 
     protected static float[] getSoundPitches(@Nonnull Random random) {
@@ -244,10 +195,6 @@ public class ItemCrossbow extends Item
         return lvl == 0 ? 25 : 25 - 5 * lvl;
     }
 
-    @Nonnull
-    @Override
-    public EnumAction getItemUseAction(@Nonnull ItemStack stack) { return ACTION; }
-
     @SideOnly(Side.CLIENT)
     @Override
     public void addInformation(@Nonnull ItemStack stack, @Nullable World worldIn, @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flagIn) {
@@ -266,57 +213,7 @@ public class ItemCrossbow extends Item
     @Override
     public int getItemEnchantability() { return 1; }
 
-    // ==============================
-    // FUNCTIONS FOR CUSTOM CROSSBOWS
-    // ==============================
-
-    /**
-     * @return the angle separating each arrow (in degrees).
-     */
-    public double getArrowSpread(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow) { return 10; }
-
-    /**
-     * Exists in case someone wants to make an addon mod that adds crossbows that fire a special amount of projectiles.
-     */
-    public int getAmmoToLoad(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow) {
-        return EnchantmentHelper.getEnchantmentLevel(CrossbowEnchantments.MULTISHOT, crossbow) > 0 ? 3 : 1;
-    }
-
     @Nonnull
-    public SoundEvent getArrowHitSound(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull EntityArrow arrow, @Nonnull ItemStack arrowStack) {
-        return CrossbowSounds.ITEM_CROSSBOW_HIT;
-    }
-
-    @Nonnull
-    public SoundEvent getLoadingEndSound(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow) {
-        return CrossbowSounds.ITEM_CROSSBOW_LOADING_END;
-    }
-
-    @Nonnull
-    public SoundEvent getLoadingMiddleSound(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, int quickChargeEnchLvl) {
-        return CrossbowSounds.ITEM_CROSSBOW_LOADING_MIDDLE;
-    }
-
-    @Nonnull
-    public SoundEvent getLoadingStartSound(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, int quickChargeEnchLvl) {
-        switch(quickChargeEnchLvl) {
-            case 1: return CrossbowSounds.ITEM_CROSSBOW_QUICK_CHARGE_1;
-            case 2: return CrossbowSounds.ITEM_CROSSBOW_QUICK_CHARGE_2;
-            case 3: return CrossbowSounds.ITEM_CROSSBOW_QUICK_CHARGE_3;
-            default: return CrossbowSounds.ITEM_CROSSBOW_LOADING_START;
-        }
-    }
-
-    @Nonnull
-    public SoundEvent getShootSound(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull IProjectile projectile, double multishotOffset) {
-        return CrossbowSounds.ITEM_CROSSBOW_SHOOT;
-    }
-
-    /**
-     * Exists in case someone wants to make an addon mod that adds crossbows that add special properties to projectiles.
-     */
-    @Nonnull
-    public IProjectile customizeProjectile(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull IProjectile projectile, @Nonnull ItemStack projectileStack, float soundPitch, boolean isCreative, float speed, float divergence, double multishotOffset) {
-        return projectile;
-    }
+    @Override
+    public EnumAction getItemUseAction(@Nonnull ItemStack stack) { return CROSSBOW_ACTION; }
 }

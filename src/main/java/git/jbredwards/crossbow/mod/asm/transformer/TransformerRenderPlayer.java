@@ -5,10 +5,10 @@
 
 package git.jbredwards.crossbow.mod.asm.transformer;
 
+import git.jbredwards.crossbow.api.ICrossbow;
 import git.jbredwards.crossbow.mod.asm.ASMHandler;
 import git.jbredwards.crossbow.mod.client.model.CrossbowArmPose;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowProjectiles;
-import git.jbredwards.crossbow.mod.common.item.ItemCrossbow;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.EnumAction;
@@ -85,7 +85,7 @@ public final class TransformerRenderPlayer implements IClassTransformer, Opcodes
         @Nonnull
         @SideOnly(Side.CLIENT)
         public static ModelBiped.ArmPose crossbowPoseOrDefault(@Nonnull EntityLivingBase entity, @Nonnull ItemStack mainItem, @Nonnull ItemStack offItem, @Nonnull EnumHand hand, @Nonnull ModelBiped.ArmPose defaultPose) {
-            if(entity.getItemInUseCount() > 0) { if((hand == EnumHand.MAIN_HAND ? mainItem : offItem).getItemUseAction() == ItemCrossbow.ACTION && hand == entity.getActiveHand()) return CrossbowArmPose.CHARGE; }
+            if(entity.getItemInUseCount() > 0) { if((hand == EnumHand.MAIN_HAND ? mainItem : offItem).getItemUseAction() == ICrossbow.CROSSBOW_ACTION && hand == entity.getActiveHand()) return CrossbowArmPose.CHARGE; }
             else {
                 final ICrossbowProjectiles mainCap = ICrossbowProjectiles.get(mainItem);
                 final ICrossbowProjectiles offCap = ICrossbowProjectiles.get(offItem);

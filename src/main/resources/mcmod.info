@@ -2,7 +2,7 @@
 {
   "modid": "crossbow",
   "name": "Crossbow",
-  "description": "Example placeholder mod.",
+  "description": "A mod that backports the Crossbow from the Village and Pillage update!",
   "version": "${version}",
   "mcversion": "${mcversion}",
   "url": "",
