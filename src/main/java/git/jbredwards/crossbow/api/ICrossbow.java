@@ -90,8 +90,6 @@ public interface ICrossbow
     }
 
     default void shoot(@Nonnull World world, @Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack projectile, float soundPitch, boolean isCreative, float speed, float divergence, double multishotOffset) {
-        final boolean isFirework = projectile.getItem() instanceof ItemFirework;
-
         final IProjectile projectileEntity = createProjectileFromStack(world, user, crossbow, projectile, isCreative, multishotOffset);
         if(projectileEntity == null) return;
 
@@ -103,7 +101,7 @@ public interface ICrossbow
         }
 
         world.spawnEntity((Entity)projectileEntity);
-        if(!isCreative) crossbow.damageItem(isFirework ? 3 : 1, user);
+        if(!isCreative) crossbow.damageItem(projectile.getItem() instanceof ItemFirework ? 3 : 1, user);
     }
 
     @Nullable
