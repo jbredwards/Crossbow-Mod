@@ -198,7 +198,7 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
 
                 final ICrossbowFireworkData cap = ICrossbowFireworkData.get(firework);
                 final RayTraceResult trace = firework.world.getEntitiesInAABBexcluding(firework, firework.getEntityBoundingBox().expand(firework.motionX, firework.motionY, firework.motionZ),
-                                Predicates.and(EntitySelectors.NOT_SPECTATING, EntitySelectors.IS_ALIVE, entity -> entity.canBeCollidedWith() && (firework.ticksExisted > 5 || cap == null || cap.getOwner() != entity)))
+                                Predicates.and(EntitySelectors.NOT_SPECTATING, EntitySelectors.IS_ALIVE, entity -> entity.canBeCollidedWith() && firework.boostedEntity != entity && (firework.ticksExisted > 5 || cap == null || cap.getOwner() != entity)))
                         .stream()
                         .map(entity -> {
                             final RayTraceResult collision = entity.getEntityBoundingBox().grow(0.3).calculateIntercept(start, end);
