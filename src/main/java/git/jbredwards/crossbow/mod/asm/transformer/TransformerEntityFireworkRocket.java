@@ -224,6 +224,7 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
                 }
             }
         }
+
         public static void shoot(@Nonnull Entity entity, @Nonnull Random rand, double x, double y, double z, float velocity, float inaccuracy) {
             final double sqrt = Math.sqrt(x * x + y * y + z * z);
 

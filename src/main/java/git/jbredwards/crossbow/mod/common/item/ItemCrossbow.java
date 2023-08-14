@@ -72,7 +72,7 @@ public class ItemCrossbow extends Item implements ICrossbow
         final ICrossbowProjectiles cap = ICrossbowProjectiles.get(held);
         if(cap != null) {
             if(!cap.isEmpty()) {
-                shootAll(worldIn, playerIn, held, cap, cap.stream().anyMatch(projectile -> projectile.getItem() instanceof ItemFirework) ? 1.6f : 3.15f, 1);
+                shootAll(worldIn, playerIn, held, cap, 3.15f, 1);
                 return ActionResult.newResult(EnumActionResult.SUCCESS, held);
             }
 

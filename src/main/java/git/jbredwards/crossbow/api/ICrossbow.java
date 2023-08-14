@@ -5,6 +5,8 @@
 
 package git.jbredwards.crossbow.api;
 
+import git.jbredwards.crossbow.api.capability.CapabilityCrossbowAmmo;
+import git.jbredwards.crossbow.api.capability.ICrossbowAmmo;
 import git.jbredwards.crossbow.mod.common.Crossbow;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowArrowData;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowFireworkData;
@@ -14,13 +16,11 @@ import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.IProjectile;
-import net.minecraft.entity.item.EntityFireworkRocket;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.EnumAction;
-import net.minecraft.item.ItemArrow;
 import net.minecraft.item.ItemFirework;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
@@ -90,60 +90,60 @@ public interface ICrossbow
     }
 
     default void shoot(@Nonnull World world, @Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack projectile, float soundPitch, boolean isCreative, float speed, float divergence, double multishotOffset) {
-        final IProjectile projectileEntity = createProjectileFromStack(world, user, crossbow, projectile, isCreative, multishotOffset);
-        if(projectileEntity == null) return;
+        final ICrossbowAmmo ammoHandler = CapabilityCrossbowAmmo.get(projectile);
+        if(ammoHandler != null) {
+            final IProjectile projectileEntity = createProjectileFromStack(world, user, crossbow, projectile, ammoHandler, isCreative, multishotOffset);
+            if(projectileEntity == null) return;
 
-        if(user instanceof ICrossbowUser) ((ICrossbowUser)user).shootAtTarget(crossbow, projectileEntity, multishotOffset);
-        else {
-            final Vec3d vec = Quat4dUtils.getMultishotVector(user, multishotOffset);
-            projectileEntity.shoot(vec.x, vec.y, vec.z, speed, divergence);
-            world.playSound(null, user.posX, user.posY, user.posZ, getShootSound(user, crossbow, projectileEntity, multishotOffset), SoundCategory.PLAYERS, 1, soundPitch);
+            if(user instanceof ICrossbowUser) ((ICrossbowUser)user).shootAtTarget(crossbow, projectileEntity, multishotOffset);
+            else {
+                final Vec3d vec = Quat4dUtils.getMultishotVector(user, multishotOffset);
+                projectileEntity.shoot(vec.x, vec.y, vec.z, speed * ammoHandler.velocityMultiplier(user, crossbow, projectile), divergence);
+                world.playSound(null, user.posX, user.posY, user.posZ, getShootSound(user, crossbow, projectileEntity, multishotOffset), SoundCategory.PLAYERS, 1, soundPitch);
+            }
+
+            world.spawnEntity((Entity)projectileEntity);
+            if(!isCreative) crossbow.damageItem(projectile.getItem() instanceof ItemFirework ? 3 : 1, user);
         }
-
-        world.spawnEntity((Entity)projectileEntity);
-        if(!isCreative) crossbow.damageItem(projectile.getItem() instanceof ItemFirework ? 3 : 1, user);
     }
 
     @Nullable
-    default IProjectile createProjectileFromStack(@Nonnull World world, @Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack projectile, boolean isCreative, double multishotOffset) {
-        if(projectile.getItem() instanceof ItemFirework) {
-            final EntityFireworkRocket firework = new EntityFireworkRocket(world, user.posX, user.posY + user.getEyeHeight() - 0.15, user.posZ, projectile);
-            final ICrossbowFireworkData fireworkCap = ICrossbowFireworkData.get(firework);
-            assert fireworkCap != null; // should always pass
-            fireworkCap.setOwner(user);
-            fireworkCap.setShotByCrossbow(true);
+    default IProjectile createProjectileFromStack(@Nonnull World world, @Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack projectile, @Nonnull ICrossbowAmmo ammoHandler, boolean isCreative, double multishotOffset) {
+        final IProjectile projectileEntity = ammoHandler.createCrossbowProjectile(user, crossbow, projectile);
 
-            return (IProjectile)firework;
+        // apply arrow data if applicable
+        final ICrossbowArrowData arrowData = ICrossbowArrowData.get((Entity)projectileEntity);
+        if(arrowData != null) {
+            if(user instanceof EntityPlayer && ForgeEventFactory.onArrowLoose(crossbow, world, (EntityPlayer)user, 1, true) < 0) return null;
+
+            arrowData.setHitSound(getArrowHitSound(user, crossbow, (EntityArrow)projectileEntity, projectile));
+            arrowData.setPierceLevel(EnchantmentHelper.getEnchantmentLevel(CrossbowEnchantments.PIERCING, crossbow));
+
+            if(user instanceof EntityPlayer) ((EntityArrow)projectileEntity).setIsCritical(true);
+            if(isCreative || multishotOffset != 0) ((EntityArrow)projectileEntity).pickupStatus = EntityArrow.PickupStatus.CREATIVE_ONLY;
         }
 
-        // forge event hook
-        if(user instanceof EntityPlayer && ForgeEventFactory.onArrowLoose(crossbow, world, (EntityPlayer)user, 1, true) < 0) return null;
+        // apply firework data if applicable
+        final ICrossbowFireworkData fireworkData = ICrossbowFireworkData.get((Entity)projectileEntity);
+        if(fireworkData != null) {
+            fireworkData.setOwner(user);
+            fireworkData.setShotByCrossbow(true);
+        }
 
-        final ItemArrow arrowItem = (ItemArrow)(projectile.getItem() instanceof ItemArrow ? projectile.getItem() : Items.ARROW);
-        final EntityArrow arrow = arrowItem.createArrow(world, projectile, user);
-        final ICrossbowArrowData arrowData = ICrossbowArrowData.get(arrow);
-
-        assert arrowData != null; // should always pass
-        arrowData.setHitSound(getArrowHitSound(user, crossbow, arrow, projectile));
-        arrowData.setPierceLevel(EnchantmentHelper.getEnchantmentLevel(CrossbowEnchantments.PIERCING, crossbow));
-
-        if(user instanceof EntityPlayer) arrow.setIsCritical(true);
-        if(isCreative || multishotOffset != 0) arrow.pickupStatus = EntityArrow.PickupStatus.CREATIVE_ONLY;
-
-        return arrow;
+        return projectileEntity;
     }
 
     @Nonnull
     default ItemStack findAmmo(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow) {
         if(user instanceof ICrossbowUser) return ((ICrossbowUser)user).findAmmo(crossbow);
-        else if(isHeldProjectile(user, user.getHeldItem(EnumHand.OFF_HAND))) return user.getHeldItem(EnumHand.OFF_HAND);
-        else if(isHeldProjectile(user, user.getHeldItem(EnumHand.MAIN_HAND))) return user.getHeldItem(EnumHand.MAIN_HAND);
+        else if(isHeldProjectile(user, crossbow, user.getHeldItem(EnumHand.OFF_HAND))) return user.getHeldItem(EnumHand.OFF_HAND);
+        else if(isHeldProjectile(user, crossbow, user.getHeldItem(EnumHand.MAIN_HAND))) return user.getHeldItem(EnumHand.MAIN_HAND);
 
         if(user instanceof EntityPlayer) {
             final IInventory inventory = ((EntityPlayer)user).inventory;
             for(int i = 0; i < inventory.getSizeInventory(); ++i) {
                 final ItemStack stack = inventory.getStackInSlot(i);
-                if(isInventoryProjectile(user, stack)) return stack;
+                if(isInventoryProjectile(user, crossbow, stack)) return stack;
             }
 
             if(((EntityPlayer)user).isCreative()) return new ItemStack(Items.ARROW);
@@ -152,11 +152,13 @@ public interface ICrossbow
         return ItemStack.EMPTY;
     }
 
-    default boolean isHeldProjectile(@Nonnull EntityLivingBase user, @Nonnull ItemStack stack) {
-        return isInventoryProjectile(user, stack) || stack.getItem() instanceof ItemFirework;
+    default boolean isHeldProjectile(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack stack) {
+        final ICrossbowAmmo ammoHandler = CapabilityCrossbowAmmo.get(stack);
+        return ammoHandler != null && ammoHandler.isHeldCrossbowAmmo(user, crossbow, stack);
     }
 
-    default boolean isInventoryProjectile(@Nonnull EntityLivingBase user, @Nonnull ItemStack stack) {
-        return stack.getItem() instanceof ItemArrow;
+    default boolean isInventoryProjectile(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack stack) {
+        final ICrossbowAmmo ammoHandler = CapabilityCrossbowAmmo.get(stack);
+        return ammoHandler != null && ammoHandler.isInventoryCrossbowAmmo(user, crossbow, stack);
     }
 }

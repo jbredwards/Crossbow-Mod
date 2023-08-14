@@ -34,7 +34,9 @@ public final class ASMHandler implements IFMLLoadingPlugin
                 "git.jbredwards.crossbow.mod.asm.transformer.TransformerEntityFireworkRocket",
                 "git.jbredwards.crossbow.mod.asm.transformer.TransformerEntityLivingBase",
                 "git.jbredwards.crossbow.mod.asm.transformer.TransformerModelBiped",
-                "git.jbredwards.crossbow.mod.asm.transformer.TransformerRenderPlayer"
+                "git.jbredwards.crossbow.mod.asm.transformer.TransformerRenderPlayer",
+                //modded
+                "git.jbredwards.crossbow.mod.asm.transformer.modded.TransformerSpartanWeaponry"
         };
     }
 

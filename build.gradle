@@ -105,6 +105,7 @@ dependencies {
 
     // Example of deobfuscating a dependency
     // implementation rfg.deobf('curse.maven:had-enough-items-557549:4543375')
+    implementation rfg.deobf('curse.maven:spartan-weaponry-278141:4467344')
 
     if (project.use_mixins.toBoolean()) {
         // Change your mixin refmap name here:

@@ -9,9 +9,6 @@ import git.jbredwards.crossbow.mod.common.Crossbow;
 import git.jbredwards.crossbow.mod.common.capability.util.CapabilityProvider;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagByte;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
@@ -65,22 +62,5 @@ public interface ICrossbowSoundData
 
         @Override
         public void setPlayedLoadingMiddleSound(boolean playedLoadSoundIn) { playedLoadSound = playedLoadSoundIn; }
-    }
-
-    enum Storage implements Capability.IStorage<ICrossbowSoundData>
-    {
-        INSTANCE;
-
-        @Nullable
-        @Override
-        public NBTBase writeNBT(@Nonnull Capability<ICrossbowSoundData> capability, @Nonnull ICrossbowSoundData instance, @Nullable EnumFacing side) {
-            // NO-OP
-            return new NBTTagByte((byte)0);
-        }
-
-        @Override
-        public void readNBT(@Nonnull Capability<ICrossbowSoundData> capability, @Nonnull ICrossbowSoundData instance, @Nullable EnumFacing side, @Nullable NBTBase nbt) {
-            // NO-OP
-        }
     }
 }
