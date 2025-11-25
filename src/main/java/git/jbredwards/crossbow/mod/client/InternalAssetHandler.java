@@ -9,20 +9,14 @@ import com.cleanroommc.assetmover.AssetMoverAPI;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.eventbus.EventBus;
 import git.jbredwards.crossbow.Tags;
-import net.minecraft.client.resources.data.IMetadataSection;
-import net.minecraft.client.resources.data.MetadataSerializer;
-import net.minecraftforge.fml.client.FMLFolderResourcePack;
 import net.minecraftforge.fml.common.*;
 import org.apache.commons.lang3.JavaVersion;
 import org.apache.commons.lang3.SystemUtils;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.Collections;
-import java.util.Set;
 
 /**
- * Fake mod container, downloads assets for AssetMover as early as possible.
+ * Fake mod container. Downloads assets from AssetMover as early as possible.
  * @author jbred
  *
  */
@@ -38,17 +32,7 @@ public final class InternalAssetHandler extends DummyModContainer
 
     @Override
     public boolean registerBus(@Nonnull final EventBus bus, @Nonnull final LoadController controller) {
-        return FMLCommonHandler.instance().getSide().isClient();
-    }
-
-    @Nonnull
-    @Override
-    public Class<?> getCustomResourcePackClass() { return InternalResourcePack.class; }
-    public static final class InternalResourcePack extends FMLFolderResourcePack
-    {
-        public InternalResourcePack(@Nonnull final ModContainer containerIn) {
-            super(containerIn);
-
+        if(FMLCommonHandler.instance().getSide().isClient()) {
             // Check that assets can actually be downloaded.
             if(SystemUtils.JAVA_VERSION != null && !SystemUtils.isJavaVersionAtLeast(JavaVersion.JAVA_9) && System.getProperty("javax.net.ssl.trustStore") == null) {
                 @Nonnull final String error = "Update Java to at least 1.8.0_311 or use CensoredASM with \"outdatedCaCertsFix\" enabled.";
@@ -56,7 +40,7 @@ public final class InternalAssetHandler extends DummyModContainer
             }
 
             // Run AssetMover. Any dependency exception is handled by the actual mod container.
-            if(Loader.isModLoaded("assetmover")) AssetMoverAPI.fromMinecraft("1.18.2", ImmutableMap.<String, String>builder()
+            try { AssetMoverAPI.fromMinecraft("1.18.2", ImmutableMap.<String, String>builder()
                     .put("assets/minecraft/sounds/item/crossbow/loading_end.ogg", "assets/crossbow/sounds/loading_end.ogg")
                     .put("assets/minecraft/sounds/item/crossbow/loading_middle1.ogg", "assets/crossbow/sounds/loading_middle1.ogg")
                     .put("assets/minecraft/sounds/item/crossbow/loading_middle2.ogg", "assets/crossbow/sounds/loading_middle2.ogg")
@@ -81,14 +65,9 @@ public final class InternalAssetHandler extends DummyModContainer
                     .put("assets/minecraft/textures/item/crossbow_pulling_2.png", "assets/crossbow/textures/items/crossbow_pulling_2.png")
                     .put("assets/minecraft/textures/item/crossbow_standby.png", "assets/crossbow/textures/items/crossbow_standby.png")
                     .build());
+            } catch(@Nonnull final Throwable ignored) {}
         }
 
-        @Nonnull
-        @Override
-        public Set<String> getResourceDomains() { return Collections.emptySet(); }
-
-        @Nullable
-        @Override
-        public <T extends IMetadataSection> T getPackMetadata(@Nonnull final MetadataSerializer serializer, @Nonnull final String name) { return null; }
+        return true;
     }
 }
