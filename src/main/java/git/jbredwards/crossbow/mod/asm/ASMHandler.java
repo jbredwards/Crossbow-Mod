@@ -40,18 +40,22 @@ public final class ASMHandler implements IFMLLoadingPlugin
         };
     }
 
-    @Nullable
+    @Nonnull
     @Override
-    public String getModContainerClass() { return null; }
+    public String getModContainerClass() { return "git.jbredwards.crossbow.mod.client.InternalAssetHandler"; }
 
-    @Nullable
-    @Override
-    public String getSetupClass() { return null; }
+    // -----
+    // NO-OP
+    // -----
 
     @Override
-    public void injectData(@Nonnull Map<String, Object> data) {}
+    public void injectData(@Nonnull final Map<String, Object> data) {}
 
     @Nullable
     @Override
     public String getAccessTransformerClass() { return null; }
+
+    @Nullable
+    @Override
+    public String getSetupClass() { return null; }
 }

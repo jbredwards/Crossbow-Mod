@@ -10,9 +10,9 @@ plugins {
     id 'com.matthewprenger.cursegradle' version '1.4.0'
 }
 
-version = project.mod_version
+version = "v${project.mod_version}-mc1.12.2"
 group = project.maven_group
-archivesBaseName = project.archives_base_name
+archivesBaseName = "Crossbow"
 
 // Set the toolchain version to decouple the Java we run Gradle with from the Java used to compile and run the mod
 java {
@@ -66,8 +66,8 @@ minecraft {
     // Add any properties you want to swap out for a dynamic value at build time here
     // Any properties here will be added to a class at build time, the name can be configured below
     // Example:
-    // injectedTags.put('VERSION', project.version)
-    // injectedTags.put('MOD_ID', project.archives_base_name)
+    injectedTags.put('VERSION', project.mod_version)
+    injectedTags.put('MOD_ID', project.archives_base_name)
 }
 
 // Generate a group.archives_base_name.Tags class
@@ -135,14 +135,14 @@ if (project.use_access_transformer.toBoolean()) {
 
 processResources {
     // This will ensure that this task is redone when the versions change
-    inputs.property 'version', project.version
+    inputs.property 'version', project.mod_version
     inputs.property 'mcversion', project.minecraft.version
     
     // Replace various properties in mcmod.info and pack.mcmeta if applicable
     filesMatching(['mcmod.info', 'pack.mcmeta']) { fcd ->
         // Replace version and mcversion
         fcd.expand (
-                'version': project.version,
+                'version': project.mod_version,
                 'mcversion': project.minecraft.version
         )
     }

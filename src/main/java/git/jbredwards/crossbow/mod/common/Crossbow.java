@@ -5,8 +5,7 @@
 
 package git.jbredwards.crossbow.mod.common;
 
-import com.cleanroommc.assetmover.AssetMoverAPI;
-import com.google.common.collect.ImmutableMap;
+import git.jbredwards.crossbow.Tags;
 import git.jbredwards.crossbow.api.capability.CapabilityCrossbowAmmo;
 import git.jbredwards.crossbow.api.capability.ICrossbowAmmo;
 import git.jbredwards.crossbow.mod.client.entity.RenderFirework;
@@ -38,10 +37,10 @@ import javax.annotation.Nonnull;
  * @author jbred
  *
  */
-@Mod(modid = Crossbow.MODID, name = Crossbow.NAME, dependencies = "required-client:assetmover@[2.5,);after:spartanweaponry@[1.5.3,)")
+@Mod(modid = Crossbow.MODID, name = Crossbow.NAME, version = Crossbow.VERSION, dependencies = "required-client:assetmover@[2.5,);after:spartanweaponry@[1.5.3,)")
 public final class Crossbow
 {
-    @Nonnull public static final String MODID = "crossbow", NAME = "Crossbow";
+    @Nonnull public static final String MODID = Tags.MOD_ID, NAME = "Crossbow", VERSION = Tags.VERSION;
     @Nonnull public static final SimpleNetworkWrapper WRAPPER = NetworkRegistry.INSTANCE.newSimpleChannel(MODID);
     public static final boolean hasSpartanWeaponry = Loader.isModLoaded("spartanweaponry");
 
@@ -49,32 +48,6 @@ public final class Crossbow
     @Mod.EventHandler
     static void constructClient(@Nonnull FMLConstructionEvent event) {
         CrossbowArmPose.init();
-        //download vanilla assets
-        AssetMoverAPI.fromMinecraft("1.18.2", ImmutableMap.<String, String>builder()
-                .put("assets/minecraft/sounds/item/crossbow/loading_end.ogg", "assets/crossbow/sounds/loading_end.ogg")
-                .put("assets/minecraft/sounds/item/crossbow/loading_middle1.ogg", "assets/crossbow/sounds/loading_middle1.ogg")
-                .put("assets/minecraft/sounds/item/crossbow/loading_middle2.ogg", "assets/crossbow/sounds/loading_middle2.ogg")
-                .put("assets/minecraft/sounds/item/crossbow/loading_middle3.ogg", "assets/crossbow/sounds/loading_middle3.ogg")
-                .put("assets/minecraft/sounds/item/crossbow/loading_middle4.ogg", "assets/crossbow/sounds/loading_middle4.ogg")
-                .put("assets/minecraft/sounds/item/crossbow/loading_start.ogg", "assets/crossbow/sounds/loading_start.ogg")
-                .put("assets/minecraft/sounds/item/crossbow/quick_charge/quick1_1.ogg", "assets/crossbow/sounds/quick_charge/quick1_1.ogg")
-                .put("assets/minecraft/sounds/item/crossbow/quick_charge/quick1_2.ogg", "assets/crossbow/sounds/quick_charge/quick1_2.ogg")
-                .put("assets/minecraft/sounds/item/crossbow/quick_charge/quick1_3.ogg", "assets/crossbow/sounds/quick_charge/quick1_3.ogg")
-                .put("assets/minecraft/sounds/item/crossbow/quick_charge/quick2_1.ogg", "assets/crossbow/sounds/quick_charge/quick2_1.ogg")
-                .put("assets/minecraft/sounds/item/crossbow/quick_charge/quick2_2.ogg", "assets/crossbow/sounds/quick_charge/quick2_2.ogg")
-                .put("assets/minecraft/sounds/item/crossbow/quick_charge/quick2_3.ogg", "assets/crossbow/sounds/quick_charge/quick2_3.ogg")
-                .put("assets/minecraft/sounds/item/crossbow/quick_charge/quick3_1.ogg", "assets/crossbow/sounds/quick_charge/quick3_1.ogg")
-                .put("assets/minecraft/sounds/item/crossbow/quick_charge/quick3_2.ogg", "assets/crossbow/sounds/quick_charge/quick3_2.ogg")
-                .put("assets/minecraft/sounds/item/crossbow/quick_charge/quick3_3.ogg", "assets/crossbow/sounds/quick_charge/quick3_3.ogg")
-                .put("assets/minecraft/sounds/item/crossbow/shoot1.ogg", "assets/crossbow/sounds/shoot1.ogg")
-                .put("assets/minecraft/sounds/item/crossbow/shoot2.ogg", "assets/crossbow/sounds/shoot2.ogg")
-                .put("assets/minecraft/sounds/item/crossbow/shoot3.ogg", "assets/crossbow/sounds/shoot3.ogg")
-                .put("assets/minecraft/textures/item/crossbow_arrow.png", "assets/crossbow/textures/items/crossbow_arrow.png")
-                .put("assets/minecraft/textures/item/crossbow_pulling_0.png", "assets/crossbow/textures/items/crossbow_pulling_0.png")
-                .put("assets/minecraft/textures/item/crossbow_pulling_1.png", "assets/crossbow/textures/items/crossbow_pulling_1.png")
-                .put("assets/minecraft/textures/item/crossbow_pulling_2.png", "assets/crossbow/textures/items/crossbow_pulling_2.png")
-                .put("assets/minecraft/textures/item/crossbow_standby.png", "assets/crossbow/textures/items/crossbow_standby.png")
-                .build());
     }
 
     @Mod.EventHandler
