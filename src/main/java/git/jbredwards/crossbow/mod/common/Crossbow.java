@@ -37,7 +37,8 @@ import javax.annotation.Nonnull;
  * @author jbred
  *
  */
-@Mod(modid = Crossbow.MODID, name = Crossbow.NAME, version = Crossbow.VERSION, dependencies = "required-client:assetmover@[2.5,);after:spartanweaponry@[1.5.3,)")
+@Mod(modid = Crossbow.MODID, name = Crossbow.NAME, version = Crossbow.VERSION, dependencies = "required-client:assetmover@[2.5,);" +
+"after:futuremc@[0.2.6,);after:spartanweaponry@[1.5.3,);") // Optional mod compatibility versions.
 public final class Crossbow
 {
     @Nonnull public static final String MODID = Tags.MOD_ID, NAME = "Crossbow", VERSION = Tags.VERSION;
