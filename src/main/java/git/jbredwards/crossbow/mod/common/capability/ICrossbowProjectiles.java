@@ -105,7 +105,7 @@ public interface ICrossbowProjectiles extends List<ItemStack>
             else if(index == projectiles.tagCount()) projectiles.appendTag(element.serializeNBT());
             else {
                 projectiles.appendTag(projectiles.get(projectiles.tagCount() - 1));
-                for(int i = projectiles.tagCount() - 1; i > index; i--) projectiles.set(i, projectiles.get(i - 1));
+                for(int i = projectiles.tagCount() - 2; i > index; i--) projectiles.set(i, projectiles.get(i - 1));
                 projectiles.set(index, element.serializeNBT());
             }
         }

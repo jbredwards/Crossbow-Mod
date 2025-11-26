@@ -84,7 +84,10 @@ public interface ICrossbowFireworkData
         public UUID getOwnerUUID() { return ownerUUID; }
 
         @Override
-        public void setOwnerUUID(@Nullable UUID ownerUUIDIn) { ownerUUID = ownerUUIDIn; }
+        public void setOwnerUUID(@Nullable UUID ownerUUIDIn) {
+            ownerUUID = ownerUUIDIn;
+            cachedOwner = null;
+        }
 
         @Nullable
         @Override
