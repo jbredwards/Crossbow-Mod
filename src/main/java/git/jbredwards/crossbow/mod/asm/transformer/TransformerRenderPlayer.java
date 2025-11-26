@@ -85,13 +85,14 @@ public final class TransformerRenderPlayer implements IClassTransformer, Opcodes
         @Nonnull
         @SideOnly(Side.CLIENT)
         public static ModelBiped.ArmPose crossbowPoseOrDefault(@Nonnull EntityLivingBase entity, @Nonnull ItemStack mainItem, @Nonnull ItemStack offItem, @Nonnull EnumHand hand, @Nonnull ModelBiped.ArmPose defaultPose) {
-            if(entity.getItemInUseCount() > 0) { if((hand == EnumHand.MAIN_HAND ? mainItem : offItem).getItemUseAction() == ICrossbow.CROSSBOW_ACTION && hand == entity.getActiveHand()) return CrossbowArmPose.CHARGE; }
+            if(entity.isSwingInProgress) return defaultPose;
+            else if(entity.getItemInUseCount() > 0) {
+                if((hand == EnumHand.MAIN_HAND ? mainItem : offItem).getItemUseAction() == ICrossbow.CROSSBOW_ACTION && hand == entity.getActiveHand()) return CrossbowArmPose.CHARGE;
+            }
             else {
-                final ICrossbowProjectiles mainCap = ICrossbowProjectiles.get(mainItem);
-                final ICrossbowProjectiles offCap = ICrossbowProjectiles.get(offItem);
-
-                if(mainCap != null && !mainCap.isEmpty()) return CrossbowArmPose.HOLD;
-                else if(offCap != null && !offCap.isEmpty() && mainItem.getItemUseAction() == EnumAction.NONE) return CrossbowArmPose.HOLD;
+                if(hand == EnumHand.OFF_HAND && mainItem.getItemUseAction() != EnumAction.NONE) return defaultPose;
+                final ICrossbowProjectiles cap = ICrossbowProjectiles.get(hand == EnumHand.MAIN_HAND ? mainItem : offItem);
+                if(cap != null && !cap.isEmpty()) return CrossbowArmPose.HOLD;
             }
 
             return defaultPose;

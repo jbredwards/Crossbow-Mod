@@ -78,7 +78,7 @@ public final class TransformerModelBiped implements IClassTransformer, Opcodes
     {
         @SideOnly(Side.CLIENT)
         public static void crossbowArmRotation(@Nonnull ModelBiped model, @Nonnull Entity entityIn) {
-            if(!(entityIn instanceof EntityLivingBase)) return;
+            if(model.swingProgress > 0 || !(entityIn instanceof EntityLivingBase)) return;
 
             final EntityLivingBase entity = (EntityLivingBase)entityIn;
             final float pullTime = entity.getActiveItemStack().getMaxItemUseDuration() - 3;
@@ -101,7 +101,7 @@ public final class TransformerModelBiped implements IClassTransformer, Opcodes
                 model.bipedRightArm.rotateAngleX = model.bipedLeftArm.rotateAngleX + angle / pullTime * (-(float)Math.PI / 2 - model.bipedLeftArm.rotateAngleX);
             }
 
-            if(model.rightArmPose == CrossbowArmPose.HOLD && model.swingProgress <= 0) {
+            if(model.rightArmPose == CrossbowArmPose.HOLD) {
                 model.bipedRightArm.rotateAngleY = -0.3f + model.bipedHead.rotateAngleY;
                 model.bipedLeftArm.rotateAngleY = 0.6f + model.bipedHead.rotateAngleY;
                 model.bipedRightArm.rotateAngleX = -(float)Math.PI / 2 + model.bipedHead.rotateAngleX + 0.1f;
