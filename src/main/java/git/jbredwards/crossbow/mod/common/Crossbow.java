@@ -60,7 +60,7 @@ public final class Crossbow
         MinecraftForge.EVENT_BUS.register(ICrossbowArrowData.class);
         CapabilityManager.INSTANCE.register(ICrossbowFireworkData.class, ICrossbowFireworkData.Storage.INSTANCE, ICrossbowFireworkData.Impl::new);
         MinecraftForge.EVENT_BUS.register(ICrossbowFireworkData.class);
-        CapabilityManager.INSTANCE.register(ICrossbowProjectiles.class, ICrossbowProjectiles.Storage.INSTANCE, ICrossbowProjectiles.Impl::new);
+        CapabilityManager.INSTANCE.register(ICrossbowProjectiles.class, ICrossbowProjectiles.Storage.INSTANCE, () -> { throw new UnsupportedOperationException(); });
         MinecraftForge.EVENT_BUS.register(ICrossbowProjectiles.class);
         CapabilityManager.INSTANCE.register(ICrossbowSoundData.class, new EmptyStorage<>(), ICrossbowSoundData.Impl::new);
         MinecraftForge.EVENT_BUS.register(ICrossbowSoundData.class);
