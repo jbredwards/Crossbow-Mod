@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnumEnchantmentType;
+import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
@@ -20,10 +21,12 @@ import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.registry.VillagerRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 import javax.annotation.Nonnull;
+import java.util.Objects;
 
 /**
  *
@@ -68,5 +71,10 @@ final class RegistryHandler
         event.getRegistry().register(new SoundEvent(new ResourceLocation(Crossbow.MODID, "items.crossbow.quick_charge_2")).setRegistryName(Crossbow.MODID, "items.crossbow.quick_charge_2"));
         event.getRegistry().register(new SoundEvent(new ResourceLocation(Crossbow.MODID, "items.crossbow.quick_charge_3")).setRegistryName(Crossbow.MODID, "items.crossbow.quick_charge_3"));
         event.getRegistry().register(new SoundEvent(new ResourceLocation(Crossbow.MODID, "items.crossbow.shoot")).setRegistryName(Crossbow.MODID, "items.crossbow.shoot"));
+    }
+
+    @SubscribeEvent
+    static void registerTrades(@Nonnull RegistryEvent.Register<VillagerRegistry.VillagerProfession> event) {
+        Objects.requireNonNull(event.getRegistry().getValue(new ResourceLocation("farmer"))).getCareer(3).addTrade(3, new EntityVillager.ListItemForEmeralds(CrossbowItems.CROSSBOW, new EntityVillager.PriceInfo(3, 5)));
     }
 }
