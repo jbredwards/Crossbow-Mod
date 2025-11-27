@@ -22,6 +22,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -29,57 +30,39 @@ import javax.annotation.Nonnull;
  *
  */
 @Mod.EventBusSubscriber(modid = Crossbow.MODID, value = Side.CLIENT)
-final class ClientEventHandler
+final class FirstPersonHandler
 {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    static void applyOverrides(@Nonnull RenderSpecificHandEvent event) {
-        final EntityPlayerSP player = Minecraft.getMinecraft().player;
-        final ItemRenderer renderer = Minecraft.getMinecraft().getItemRenderer();
-        final boolean isMainHand = event.getHand() == EnumHand.MAIN_HAND;
+    static void hideFirstPersonHand(@Nonnull final RenderSpecificHandEvent event) {
+        @Nonnull final EntityPlayerSP player = Minecraft.getMinecraft().player;
 
+        // Hide opposite hand while crossbow is reloading.
         if(player.isHandActive()) {
-            if(ICrossbowProjectiles.get(player.getActiveItemStack()) != null) {
-                final boolean isActiveMainHand = player.getActiveHand() == EnumHand.MAIN_HAND;
-                if(!isActiveMainHand && isMainHand) event.setCanceled(true);
-                else if(isActiveMainHand && !isMainHand) event.setCanceled(true);
-            }
-
-            else if(!isMainHand && player.getActiveHand() == EnumHand.MAIN_HAND) {
-                final ICrossbowProjectiles cap = ICrossbowProjectiles.get(renderer.itemStackOffHand);
-                if(cap != null && !cap.isEmpty()) event.setCanceled(true);
-            }
+            if(player.getActiveHand() != event.getHand() && ICrossbowProjectiles.get(player.getActiveItemStack()) != null) event.setCanceled(true);
         }
 
-        else {
-            if(!isMainHand) {
-                final ICrossbowProjectiles cap = ICrossbowProjectiles.get(renderer.itemStackMainHand);
-                if(cap != null && !cap.isEmpty()) {
-                    event.setCanceled(true);
-                    return;
-                }
-            }
-
-            final ICrossbowProjectiles cap = ICrossbowProjectiles.get(renderer.itemStackOffHand);
-            if(cap != null && !cap.isEmpty()) {
-                if(isMainHand && renderer.itemStackMainHand.isEmpty()) event.setCanceled(true);
-                else if(!isMainHand) event.setCanceled(true);
-            }
+        // Hide off-hand if main-hand has a loaded crossbow.
+        else if(event.getHand() == EnumHand.OFF_HAND) {
+            @Nullable final ICrossbowProjectiles cap = ICrossbowProjectiles.get(Minecraft.getMinecraft().getItemRenderer().itemStackMainHand);
+            if(cap != null && !cap.isEmpty()) event.setCanceled(true);
         }
     }
 
     @SubscribeEvent
-    static void renderHeldCrossbow(@Nonnull RenderSpecificHandEvent event) {
-        final ICrossbowProjectiles cap = event.getItemStack().isEmpty() ? null : ICrossbowProjectiles.get(event.getItemStack());
+    static void renderHeldCrossbow(@Nonnull final RenderSpecificHandEvent event) {
+        @Nonnull final ItemStack stack = event.getItemStack();
+        @Nullable final ICrossbowProjectiles cap = stack.isEmpty() ? null : ICrossbowProjectiles.get(stack);
         if(cap != null) {
             GlStateManager.pushMatrix();
-            final EntityPlayerSP player = Minecraft.getMinecraft().player;
-            final ItemRenderer renderer = Minecraft.getMinecraft().getItemRenderer();
-            final ItemStack stack = event.getItemStack();
 
-            final EnumHandSide arm = event.getHand() == EnumHand.MAIN_HAND ? player.getPrimaryHand() : player.getPrimaryHand().opposite();
+            @Nonnull final EntityPlayerSP player = Minecraft.getMinecraft().player;
+            @Nonnull final ItemRenderer renderer = Minecraft.getMinecraft().getItemRenderer();
+            @Nonnull final EnumHandSide arm = event.getHand() == EnumHand.MAIN_HAND ? player.getPrimaryHand() : player.getPrimaryHand().opposite();
+
             final boolean isRightArm = arm == EnumHandSide.RIGHT;
             final int armOffset = isRightArm ? 1 : -1;
 
+            // Render offset for reloading crossbow.
             if(player.isHandActive() && player.getItemInUseCount() > 0 && player.getActiveHand() == event.getHand()) {
                 renderer.transformSideFirstPerson(arm, event.getEquipProgress());
                 GlStateManager.translate(armOffset * -0.4785682, -0.094387, 0.05731531);
@@ -97,15 +80,14 @@ final class ClientEventHandler
             }
 
             else {
-                GlStateManager.translate(
-                        armOffset * -0.4 * Math.sin(Math.sqrt(event.getSwingProgress()) * Math.PI),
-                        0.2 * Math.sin(Math.sqrt(event.getSwingProgress()) * Math.PI * 2),
-                        -0.2 * Math.sin(event.getSwingProgress() * Math.PI)
-                );
-
+                // Apply vanilla render offsets.
+                final float swingProgress = event.getSwingProgress();
+                GlStateManager.translate(-0.4 * Math.sin(Math.sqrt(swingProgress) * Math.PI) * armOffset, 0.2 * Math.sin(Math.sqrt(swingProgress) * Math.PI * 2), -0.2 * Math.sin(swingProgress * Math.PI));
                 renderer.transformSideFirstPerson(arm, event.getEquipProgress());
-                renderer.transformFirstPerson(arm, event.getSwingProgress());
-                if(!cap.isEmpty() && event.getSwingProgress() < 0.001) {
+                renderer.transformFirstPerson(arm, swingProgress);
+
+                // Position loaded crossbow at the center.
+                if(event.getHand() == EnumHand.MAIN_HAND && swingProgress < 0.001 && !cap.isEmpty()) {
                     GlStateManager.translate(armOffset * -0.641864, 0, 0);
                     GlStateManager.rotate(armOffset * 10, 0, 1, 0);
                 }
