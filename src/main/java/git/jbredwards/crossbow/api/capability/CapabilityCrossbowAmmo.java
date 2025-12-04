@@ -103,6 +103,9 @@ public final class CapabilityCrossbowAmmo
 
                 @Override
                 public float velocityMultiplier(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack projectile) { return 0.5f; }
+
+                @Override
+                public void damageCrossbow(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack projectile) { crossbow.damageItem(3, user); }
             }));
         }
 

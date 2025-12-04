@@ -105,7 +105,7 @@ public interface ICrossbow
             }
 
             world.spawnEntity((Entity)projectileEntity);
-            if(!isCreative) crossbow.damageItem(projectile.getItem() instanceof ItemFirework ? 3 : 1, user);
+            if(!isCreative) ammoHandler.damageCrossbow(user, crossbow, projectile);
         }
     }
 

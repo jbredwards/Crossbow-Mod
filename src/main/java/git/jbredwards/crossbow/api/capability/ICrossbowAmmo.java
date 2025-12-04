@@ -85,7 +85,15 @@ public interface ICrossbowAmmo
     }
 
     /**
-     * @return the created projectile instance upon firing a crossbow. The projectile's velocity is handled by the crossbow itself.
+     * Damages the crossbow after it shoots a projectile. For multishot crossbows, this is called for each shot projectile.
+     * @since 1.2.0
+     */
+    default void damageCrossbow(@Nonnull final EntityLivingBase user, @Nonnull final ItemStack crossbow, @Nonnull final ItemStack projectile) {
+        crossbow.damageItem(1, user);
+    }
+
+    /**
+     * @return The created projectile upon firing a crossbow. The projectile's velocity is handled by the crossbow itself.
      * @since 1.1.0
      */
     @Nullable
