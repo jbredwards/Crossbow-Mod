@@ -6,17 +6,22 @@
 package git.jbredwards.crossbow.mod.common.item;
 
 import git.jbredwards.crossbow.api.ICrossbow;
+import git.jbredwards.crossbow.mod.common.Crossbow;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowProjectiles;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowSoundData;
 import git.jbredwards.crossbow.mod.common.init.CrossbowEnchantments;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.enchantment.EnumEnchantmentType;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.init.Items;
 import net.minecraft.item.EnumAction;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemArrow;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
@@ -26,6 +31,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -82,7 +88,7 @@ public class ItemCrossbow extends Item implements ICrossbow
         }
     }
 
-    protected static boolean loadProjectiles(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ICrossbowProjectiles cap) {
+    public static boolean loadProjectiles(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ICrossbowProjectiles cap) {
         final int ammoToLoad = ((ICrossbow)crossbow.getItem()).getAmmoToLoad(user, crossbow);
         final boolean isCreative = user instanceof EntityPlayer && ((EntityPlayer)user).isCreative();
 
@@ -96,20 +102,25 @@ public class ItemCrossbow extends Item implements ICrossbow
                 ammoCopy = new ItemStack(Items.ARROW);
             }
 
-            if(!loadProjectile(user, cap, ammo, isCreative)) return false;
+            if(!loadProjectile(user, cap, ammo, isCreative || Crossbow.Cfg.allowBowEnchantments && user instanceof EntityPlayer
+            && ammo.getItem() instanceof ItemArrow && ((ItemArrow)ammo.getItem()).isInfinite(ammo, crossbow, (EntityPlayer)user))) return false;
         }
 
         return true;
     }
 
-    protected static boolean loadProjectile(@Nonnull EntityLivingBase user, @Nonnull ICrossbowProjectiles cap, @Nonnull ItemStack projectile, boolean isCreative) {
+    public static boolean loadProjectile(@Nonnull EntityLivingBase user, @Nonnull ICrossbowProjectiles cap, @Nonnull ItemStack projectile, boolean ammoInfinite) {
         if(projectile.isEmpty()) return false;
-        if(!isCreative) {
+        if(!ammoInfinite) {
             cap.add(projectile.splitStack(1));
             if(projectile.isEmpty() && user instanceof EntityPlayer) ((EntityPlayer)user).inventory.deleteStack(projectile);
         }
 
-        else cap.add(projectile.copy());
+        else {
+            if(cap.isEmpty()) cap.setPickupStatus(user instanceof EntityPlayer ? EntityArrow.PickupStatus.CREATIVE_ONLY : EntityArrow.PickupStatus.DISALLOWED);
+            cap.add(ItemHandlerHelper.copyStackWithSize(projectile, 1));
+        }
+
         return true;
     }
 
@@ -129,6 +140,7 @@ public class ItemCrossbow extends Item implements ICrossbow
         }
 
         cap.clear();
+        cap.setPickupStatus(null);
     }
 
     protected static float[] getSoundPitches(@Nonnull Random random) {
@@ -191,6 +203,16 @@ public class ItemCrossbow extends Item implements ICrossbow
 
     @Override
     public int getItemEnchantability() { return 1; }
+
+    @Override
+    public boolean canApplyAtEnchantingTable(@Nonnull final ItemStack stack, @Nonnull final Enchantment enchantment) {
+        return super.canApplyAtEnchantingTable(stack, enchantment) || Crossbow.Cfg.allowBowEnchantments && enchantment.type == EnumEnchantmentType.BOW;
+    }
+
+    @Override
+    public boolean isBookEnchantable(@Nonnull final ItemStack stack, @Nonnull final ItemStack book) {
+        return Crossbow.Cfg.allowBowEnchantments || EnchantmentHelper.getEnchantments(book).keySet().stream().noneMatch(ench -> ench.type == EnumEnchantmentType.BOW);
+    }
 
     @Nonnull
     @Override

@@ -24,11 +24,15 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.CapabilityManager;
+import net.minecraftforge.common.config.Config;
+import net.minecraftforge.common.config.ConfigManager;
+import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLConstructionEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
@@ -41,6 +45,7 @@ import javax.annotation.Nonnull;
  * @author jbred
  *
  */
+@Mod.EventBusSubscriber
 @Mod(modid = Crossbow.MODID, name = Crossbow.NAME, version = Crossbow.VERSION, dependencies = "required-client:assetmover@[2.5,);" +
 "after:futuremc@[0.2.6,);after:spartanweaponry@[1.5.3,);") // Optional mod compatibility versions.
 public final class Crossbow
@@ -48,6 +53,18 @@ public final class Crossbow
     @Nonnull public static final String MODID = Tags.MOD_ID, NAME = Tags.MOD_NAME, VERSION = Tags.VERSION;
     @Nonnull public static final SimpleNetworkWrapper WRAPPER = NetworkRegistry.INSTANCE.newSimpleChannel(MODID);
     public static final boolean hasSpartanWeaponry = Loader.isModLoaded("spartanweaponry");
+
+    @Config(modid = MODID)
+    public static final class Cfg
+    {
+        @Config.LangKey("config." + MODID + ".allowBowEnchantments")
+        public static boolean allowBowEnchantments = false;
+    }
+
+    @SubscribeEvent
+    static void syncConfig(@Nonnull ConfigChangedEvent.OnConfigChangedEvent event) {
+        if(MODID.equals(event.getModID())) ConfigManager.sync(MODID, Config.Type.INSTANCE);
+    }
 
     @SideOnly(Side.CLIENT)
     @Mod.EventHandler

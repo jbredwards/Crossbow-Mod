@@ -10,6 +10,7 @@ import git.jbredwards.crossbow.api.capability.ICrossbowAmmo;
 import git.jbredwards.crossbow.mod.common.Crossbow;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowArrowData;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowFireworkData;
+import git.jbredwards.crossbow.mod.common.capability.ICrossbowProjectiles;
 import git.jbredwards.crossbow.mod.common.init.CrossbowEnchantments;
 import git.jbredwards.crossbow.mod.common.init.CrossbowSounds;
 import net.minecraft.enchantment.EnchantmentHelper;
@@ -18,6 +19,7 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.IProjectile;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.projectile.EntityArrow;
+import net.minecraft.init.Enchantments;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.EnumAction;
@@ -114,13 +116,22 @@ public interface ICrossbow
         // apply arrow data if applicable
         final ICrossbowArrowData arrowData = ICrossbowArrowData.get((Entity)projectileEntity);
         if(arrowData != null) {
-            if(user instanceof EntityPlayer && ForgeEventFactory.onArrowLoose(crossbow, world, (EntityPlayer)user, 1, true) < 0) return null;
-
             arrowData.setHitSound(getArrowHitSound(user, crossbow, (EntityArrow)projectileEntity, projectile));
             arrowData.setPierceLevel(EnchantmentHelper.getEnchantmentLevel(CrossbowEnchantments.PIERCING, crossbow));
 
             if(user instanceof EntityPlayer) ((EntityArrow)projectileEntity).setIsCritical(true);
-            if(isCreative || multishotOffset != 0) ((EntityArrow)projectileEntity).pickupStatus = EntityArrow.PickupStatus.CREATIVE_ONLY;
+            if(multishotOffset != 0 || !ICrossbowProjectiles.applyPickupStatus(crossbow, (EntityArrow)projectileEntity) && isCreative) ((EntityArrow)projectileEntity).pickupStatus = EntityArrow.PickupStatus.CREATIVE_ONLY;
+
+            if(user instanceof EntityPlayer && ForgeEventFactory.onArrowLoose(crossbow, world, (EntityPlayer)user, 1, true) < 0) return null;
+            if(Crossbow.Cfg.allowBowEnchantments) {
+                if(EnchantmentHelper.getEnchantmentLevel(Enchantments.FLAME, crossbow) > 0) ((EntityArrow)projectileEntity).setFire(100);
+
+                final int power = EnchantmentHelper.getEnchantmentLevel(Enchantments.POWER, crossbow);
+                if(power > 0) ((EntityArrow)projectileEntity).setDamage(((EntityArrow)projectileEntity).getDamage() + power * 0.5 + 0.5);
+
+                final int punch = EnchantmentHelper.getEnchantmentLevel(Enchantments.PUNCH, crossbow);
+                if(punch > 0) ((EntityArrow)projectileEntity).setKnockbackStrength(punch);
+            }
         }
 
         // apply firework data if applicable

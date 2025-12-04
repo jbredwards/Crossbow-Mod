@@ -9,9 +9,11 @@ import git.jbredwards.crossbow.api.ICrossbow;
 import git.jbredwards.crossbow.mod.common.Crossbow;
 import git.jbredwards.crossbow.mod.common.capability.util.CapabilityProvider;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagByte;
+import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
@@ -39,19 +41,37 @@ public interface ICrossbowProjectiles extends List<ItemStack>
     @Nonnull Capability<ICrossbowProjectiles> CAPABILITY = null;
     @Nonnull ResourceLocation CAPABILITY_ID = new ResourceLocation(Crossbow.MODID, "crossbow_projectiles");
 
+    @Nonnull String AMMO_NBT = "ChargedProjectiles";
+    @Nonnull String PICKUP_NBT = Crossbow.MODID + ":pickup_status";
+
+    @Nullable
+    EntityArrow.PickupStatus getPickupStatus();
+    void setPickupStatus(@Nullable final EntityArrow.PickupStatus pickupStatus);
+
     @Nonnull
-    default ItemStack findAmmo(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow) {
+    default ItemStack findAmmo(@Nonnull final EntityLivingBase user, @Nonnull final ItemStack crossbow) {
         return ((ICrossbow)crossbow.getItem()).findAmmo(user, crossbow);
     }
 
     @Nullable
-    static ICrossbowProjectiles get(@Nullable ICapabilityProvider provider) {
+    static ICrossbowProjectiles get(@Nullable final ICapabilityProvider provider) {
         return provider != null && provider.hasCapability(CAPABILITY, null) ? provider.getCapability(CAPABILITY, null) : null;
     }
 
     @SubscribeEvent
-    static void attach(@Nonnull AttachCapabilitiesEvent<ItemStack> event) {
+    static void attach(@Nonnull final AttachCapabilitiesEvent<ItemStack> event) {
         if(event.getObject().getItem() instanceof ICrossbow) event.addCapability(CAPABILITY_ID, new CapabilityProvider<>(CAPABILITY, new Impl(event.getObject())));
+    }
+
+    static boolean applyPickupStatus(@Nullable final ICapabilityProvider provider, @Nonnull final EntityArrow arrow) {
+        @Nullable final ICrossbowProjectiles cap = get(provider);
+        if(cap == null) return false;
+
+        @Nullable final EntityArrow.PickupStatus status = cap.getPickupStatus();
+        if(status == null) return false;
+
+        arrow.pickupStatus = status;
+        return true;
     }
 
     class Impl extends AbstractList<ItemStack> implements ICrossbowProjectiles
@@ -60,11 +80,27 @@ public interface ICrossbowProjectiles extends List<ItemStack>
         protected final ItemStack crossbow;
         public Impl(@Nonnull final ItemStack crossbowIn) { crossbow = crossbowIn; }
 
+        @Nullable
+        @Override
+        public EntityArrow.PickupStatus getPickupStatus() {
+            return crossbow.hasTagCompound() && crossbow.getTagCompound().hasKey(PICKUP_NBT, Constants.NBT.TAG_ANY_NUMERIC)
+                    ? EntityArrow.PickupStatus.getByOrdinal(crossbow.getTagCompound().getInteger(PICKUP_NBT)) : null;
+        }
+
+        @Override
+        public void setPickupStatus(@Nullable final EntityArrow.PickupStatus pickupStatus) {
+            if(pickupStatus != null) crossbow.setTagInfo(PICKUP_NBT, new NBTTagInt(pickupStatus.ordinal()));
+            else if(crossbow.hasTagCompound()) {
+                crossbow.getTagCompound().removeTag(PICKUP_NBT);
+                if(crossbow.getTagCompound().isEmpty()) crossbow.setTagCompound(null);
+            }
+        }
+
         @Nonnull
         @Override
         public ItemStack get(final int index) {
-            if(!crossbow.hasTagCompound() || !crossbow.getTagCompound().hasKey("ChargedProjectiles", Constants.NBT.TAG_LIST)) throw new IndexOutOfBoundsException("Index: "+index+", Size: 0");
-            @Nonnull final NBTTagList projectiles = crossbow.getTagCompound().getTagList("ChargedProjectiles", Constants.NBT.TAG_COMPOUND);
+            if(!crossbow.hasTagCompound() || !crossbow.getTagCompound().hasKey(AMMO_NBT, Constants.NBT.TAG_LIST)) throw new IndexOutOfBoundsException("Index: "+index+", Size: 0");
+            @Nonnull final NBTTagList projectiles = crossbow.getTagCompound().getTagList(AMMO_NBT, Constants.NBT.TAG_COMPOUND);
 
             if(index >= projectiles.tagCount() || index < 0) throw new IndexOutOfBoundsException("Index: "+index+", Size: "+projectiles.tagCount());
             return new ItemStack(projectiles.getCompoundTagAt(index));
@@ -74,7 +110,7 @@ public interface ICrossbowProjectiles extends List<ItemStack>
         @Override
         public ItemStack set(final int index, @Nonnull final ItemStack element) {
             @Nullable final ItemStack prev = get(index);
-            @Nonnull final NBTTagList projectiles = crossbow.getTagCompound().getTagList("ChargedProjectiles", Constants.NBT.TAG_COMPOUND);
+            @Nonnull final NBTTagList projectiles = crossbow.getTagCompound().getTagList(AMMO_NBT, Constants.NBT.TAG_COMPOUND);
 
             projectiles.set(index, element.serializeNBT());
             return prev;
@@ -84,11 +120,11 @@ public interface ICrossbowProjectiles extends List<ItemStack>
         @Override
         public ItemStack remove(final int index) {
             @Nullable final ItemStack prev = get(index);
-            @Nonnull final NBTTagList projectiles = crossbow.getTagCompound().getTagList("ChargedProjectiles", Constants.NBT.TAG_COMPOUND);
+            @Nonnull final NBTTagList projectiles = crossbow.getTagCompound().getTagList(AMMO_NBT, Constants.NBT.TAG_COMPOUND);
 
             projectiles.removeTag(index);
             if(projectiles.isEmpty()) {
-                crossbow.getTagCompound().removeTag("ChargedProjectiles");
+                crossbow.getTagCompound().removeTag(AMMO_NBT);
                 if(crossbow.getTagCompound().isEmpty()) crossbow.setTagCompound(null);
             }
 
@@ -98,8 +134,8 @@ public interface ICrossbowProjectiles extends List<ItemStack>
         @Override
         public void add(final int index, @Nonnull final ItemStack element) {
             @Nonnull final NBTTagList projectiles;
-            if(!crossbow.hasTagCompound() || !crossbow.getTagCompound().hasKey("ChargedProjectiles", Constants.NBT.TAG_LIST)) crossbow.setTagInfo("ChargedProjectiles", projectiles = new NBTTagList());
-            else projectiles = crossbow.getTagCompound().getTagList("ChargedProjectiles", Constants.NBT.TAG_COMPOUND);
+            if(!crossbow.hasTagCompound() || !crossbow.getTagCompound().hasKey(AMMO_NBT, Constants.NBT.TAG_LIST)) crossbow.setTagInfo(AMMO_NBT, projectiles = new NBTTagList());
+            else projectiles = crossbow.getTagCompound().getTagList(AMMO_NBT, Constants.NBT.TAG_COMPOUND);
 
             if(index > projectiles.tagCount() || index < 0) throw new IndexOutOfBoundsException("Index: "+index+", Size: "+projectiles.tagCount());
             else if(index == projectiles.tagCount()) projectiles.appendTag(element.serializeNBT());
@@ -112,8 +148,8 @@ public interface ICrossbowProjectiles extends List<ItemStack>
 
         @Override
         public int size() {
-            if(!crossbow.hasTagCompound() || !crossbow.getTagCompound().hasKey("ChargedProjectiles", Constants.NBT.TAG_LIST)) return 0;
-            else return crossbow.getTagCompound().getTagList("ChargedProjectiles", Constants.NBT.TAG_COMPOUND).tagCount();
+            if(!crossbow.hasTagCompound() || !crossbow.getTagCompound().hasKey(AMMO_NBT, Constants.NBT.TAG_LIST)) return 0;
+            else return crossbow.getTagCompound().getTagList(AMMO_NBT, Constants.NBT.TAG_COMPOUND).tagCount();
         }
     }
 
