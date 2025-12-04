@@ -8,19 +8,22 @@ package git.jbredwards.crossbow.api.capability;
 import git.jbredwards.crossbow.mod.common.Crossbow;
 import git.jbredwards.crossbow.mod.common.capability.util.CapabilityProvider;
 import git.jbredwards.crossbow.mod.common.compat.SpartanWeaponryHandler;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMaps;
+import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.IProjectile;
 import net.minecraft.entity.item.EntityFireworkRocket;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemArrow;
-import net.minecraft.item.ItemFirework;
-import net.minecraft.item.ItemStack;
+import net.minecraft.item.*;
+import net.minecraft.potion.PotionUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -36,7 +39,7 @@ public final class CapabilityCrossbowAmmo
 {
     @CapabilityInject(ICrossbowAmmo.class)
     @Nonnull public static final Capability<ICrossbowAmmo> CAPABILITY = null;
-    @Nonnull public static final ResourceLocation CAPABILITY_ID = new ResourceLocation(Crossbow.MODID, "crossbow_sound_data");
+    @Nonnull public static final ResourceLocation CAPABILITY_ID = new ResourceLocation(Crossbow.MODID, "crossbow_sound_data"); // Bad ID... leaving it for now to maintain backward compatibility.
 
     @Nullable
     public static ICrossbowAmmo get(@Nonnull ItemStack stack) {
@@ -46,16 +49,49 @@ public final class CapabilityCrossbowAmmo
     @SubscribeEvent(priority = EventPriority.LOWEST)
     static void attach(@Nonnull AttachCapabilitiesEvent<ItemStack> event) {
         final Item item = event.getObject().getItem();
+        if(item instanceof ICrossbowAmmo) return;
 
-        // arrows
-        if(item instanceof ItemArrow) {
-            if(!event.getCapabilities().containsKey(CAPABILITY_ID)) event.addCapability(CAPABILITY_ID, new CapabilityProvider<>(CAPABILITY,
-                    (user, crossbow, projectile) -> ((ItemArrow)projectile.getItem()).createArrow(user.world, projectile, user)));
+        // spectral arrows
+        if(item instanceof ItemSpectralArrow) {
+            if(!event.getCapabilities().containsKey(CAPABILITY_ID)) event.addCapability(CAPABILITY_ID, new CapabilityProvider<>(CAPABILITY, new ICrossbowAmmo.Arrow() {
+                @Nonnull
+                @SideOnly(Side.CLIENT)
+                @Override
+                public ModelResourceLocation getAmmoModelLocation(@Nullable EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack projectile) {
+                    return new ModelResourceLocation(new ResourceLocation(Crossbow.MODID, "crossbow"), "spectral_arrow");
+                }
+            }));
+        }
+
+        // tipped arrows
+        if(item instanceof ItemTippedArrow) {
+            if(!event.getCapabilities().containsKey(CAPABILITY_ID)) event.addCapability(CAPABILITY_ID, new CapabilityProvider<>(CAPABILITY, new ICrossbowAmmo.Arrow() {
+                @Nonnull
+                @SideOnly(Side.CLIENT)
+                @Override
+                public ModelResourceLocation getAmmoModelLocation(@Nullable EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack projectile) {
+                    return new ModelResourceLocation(new ResourceLocation(Crossbow.MODID, "crossbow"), "tipped_arrow");
+                }
+
+                @Nonnull
+                @SideOnly(Side.CLIENT)
+                @Override
+                public Int2IntMap getAmmoModelColor(@Nullable EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack projectile) {
+                    return Int2IntMaps.singleton(0, PotionUtils.getColor(projectile));
+                }
+            }));
         }
 
         // fireworks
         if(item instanceof ItemFirework) {
             if(!event.getCapabilities().containsKey(CAPABILITY_ID)) event.addCapability(CAPABILITY_ID, new CapabilityProvider<>(CAPABILITY, new ICrossbowAmmo() {
+                @Nonnull
+                @SideOnly(Side.CLIENT)
+                @Override
+                public ModelResourceLocation getAmmoModelLocation(@Nullable EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack projectile) {
+                    return new ModelResourceLocation(new ResourceLocation(Crossbow.MODID, "crossbow"), "firework");
+                }
+
                 @Nullable
                 @Override
                 public IProjectile createCrossbowProjectile(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack projectile) {
@@ -68,6 +104,11 @@ public final class CapabilityCrossbowAmmo
                 @Override
                 public float velocityMultiplier(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack projectile) { return 0.5f; }
             }));
+        }
+
+        // arrows
+        if(item instanceof ItemArrow) {
+            if(!event.getCapabilities().containsKey(CAPABILITY_ID)) event.addCapability(CAPABILITY_ID, new CapabilityProvider<>(CAPABILITY, new ICrossbowAmmo.Arrow() {}));
         }
 
         // bolts (Spartan Weaponry)

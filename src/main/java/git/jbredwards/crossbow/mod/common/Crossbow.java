@@ -10,6 +10,7 @@ import git.jbredwards.crossbow.api.capability.CapabilityCrossbowAmmo;
 import git.jbredwards.crossbow.api.capability.ICrossbowAmmo;
 import git.jbredwards.crossbow.mod.client.entity.RenderFirework;
 import git.jbredwards.crossbow.mod.client.model.CrossbowArmPose;
+import git.jbredwards.crossbow.mod.client.model.CrossbowModel;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowArrowData;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowFireworkData;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowProjectiles;
@@ -17,7 +18,10 @@ import git.jbredwards.crossbow.mod.common.capability.ICrossbowSoundData;
 import git.jbredwards.crossbow.mod.common.capability.util.EmptyStorage;
 import git.jbredwards.crossbow.mod.common.network.MessageSyncArrowData;
 import git.jbredwards.crossbow.mod.common.network.MessageSyncFireworkData;
+import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.entity.item.EntityFireworkRocket;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
@@ -41,7 +45,7 @@ import javax.annotation.Nonnull;
 "after:futuremc@[0.2.6,);after:spartanweaponry@[1.5.3,);") // Optional mod compatibility versions.
 public final class Crossbow
 {
-    @Nonnull public static final String MODID = Tags.MOD_ID, NAME = "Crossbow", VERSION = Tags.VERSION;
+    @Nonnull public static final String MODID = Tags.MOD_ID, NAME = Tags.MOD_NAME, VERSION = Tags.VERSION;
     @Nonnull public static final SimpleNetworkWrapper WRAPPER = NetworkRegistry.INSTANCE.newSimpleChannel(MODID);
     public static final boolean hasSpartanWeaponry = Loader.isModLoaded("spartanweaponry");
 
@@ -73,7 +77,14 @@ public final class Crossbow
     @SideOnly(Side.CLIENT)
     @Mod.EventHandler
     static void preInitClient(@Nonnull FMLPreInitializationEvent event) {
-        //firework entity renderer override
+        //builtin ammo model renders
+        ICrossbowAmmo.AMMO_MODELS.add(new ModelResourceLocation(new ResourceLocation(Crossbow.MODID, "crossbow"), "arrow"));
+        ICrossbowAmmo.AMMO_MODELS.add(new ModelResourceLocation(new ResourceLocation(Crossbow.MODID, "crossbow"), "firework"));
+        ICrossbowAmmo.AMMO_MODELS.add(new ModelResourceLocation(new ResourceLocation(Crossbow.MODID, "crossbow"), "spectral_arrow"));
+        ICrossbowAmmo.AMMO_MODELS.add(new ModelResourceLocation(new ResourceLocation(Crossbow.MODID, "crossbow"), "tipped_arrow"));
+
+        //register renderer handlers
+        ModelLoaderRegistry.registerLoader(CrossbowModel.Loader.INSTANCE);
         RenderingRegistry.registerEntityRenderingHandler(EntityFireworkRocket.class, RenderFirework::new);
     }
 }

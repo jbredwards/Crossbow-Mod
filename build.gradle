@@ -65,9 +65,9 @@ minecraft {
     
     // Add any properties you want to swap out for a dynamic value at build time here
     // Any properties here will be added to a class at build time, the name can be configured below
-    // Example:
     injectedTags.put('VERSION', project.mod_version)
     injectedTags.put('MOD_ID', project.archives_base_name)
+    injectedTags.put('MOD_NAME', archivesBaseName)
 }
 
 // Generate a group.archives_base_name.Tags class

@@ -6,7 +6,6 @@
 package git.jbredwards.crossbow.mod.common.item;
 
 import git.jbredwards.crossbow.api.ICrossbow;
-import git.jbredwards.crossbow.mod.common.Crossbow;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowProjectiles;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowSoundData;
 import git.jbredwards.crossbow.mod.common.init.CrossbowEnchantments;
@@ -18,12 +17,10 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.item.EnumAction;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemFirework;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.event.ForgeEventFactory;
@@ -44,27 +41,6 @@ import java.util.stream.Collectors;
  */
 public class ItemCrossbow extends Item implements ICrossbow
 {
-    public ItemCrossbow() {
-        addPropertyOverride(new ResourceLocation(Crossbow.MODID, "pull"), (stack, world, entity) -> {
-            if(entity == null) return 0;
-            final ICrossbowProjectiles cap = ICrossbowProjectiles.get(stack);
-            return cap == null || !cap.isEmpty() ? 0 : (float)(stack.getMaxItemUseDuration() - entity.getItemInUseCount()) / getPullTime(stack);
-        });
-
-        addPropertyOverride(new ResourceLocation(Crossbow.MODID, "pulling"), (stack, world, entity) ->
-            entity != null && entity.isHandActive() && entity.getActiveItemStack() == stack ? 1 : 0);
-
-        addPropertyOverride(new ResourceLocation(Crossbow.MODID, "charged"), (stack, world, entity) -> {
-            final ICrossbowProjectiles cap = ICrossbowProjectiles.get(stack);
-            return cap != null && !cap.isEmpty() ? 1 : 0;
-        });
-
-        addPropertyOverride(new ResourceLocation(Crossbow.MODID, "firework"), (stack, world, entity) -> {
-            final ICrossbowProjectiles cap = ICrossbowProjectiles.get(stack);
-            return cap != null && cap.stream().anyMatch(projectile -> projectile.getItem() instanceof ItemFirework) ? 1 : 0;
-        });
-    }
-
     @Nonnull
     @Override
     public ActionResult<ItemStack> onItemRightClick(@Nonnull World worldIn, @Nonnull EntityPlayer playerIn, @Nonnull EnumHand handIn) {

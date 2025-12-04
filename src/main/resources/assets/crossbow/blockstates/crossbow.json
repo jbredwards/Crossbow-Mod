@@ -1,0 +1,28 @@
+{
+    "forge_marker": 1,
+    "variants": {
+        "inventory": {
+            "model": "crossbow:builtin",
+            "custom": {
+                "normal": "crossbow:crossbow#normal",
+                "loaded": "crossbow:crossbow#loaded",
+                "pulling": [
+                    "crossbow:crossbow#pulling0",
+                    "crossbow:crossbow#pulling1",
+                    "crossbow:crossbow#pulling2"
+                ]
+            }
+        },
+
+        "normal": {"model": "crossbow:template", "textures": {"layer0": "crossbow:items/crossbow_standby"}},
+        "loaded": {"model": "crossbow:template", "textures": {"layer0": "crossbow:items/crossbow_pulling_2"}},
+        "pulling0": {"model": "crossbow:template", "textures": {"layer0": "crossbow:items/crossbow_pulling_0"}},
+        "pulling1": {"model": "crossbow:template", "textures": {"layer0": "crossbow:items/crossbow_pulling_1"}},
+        "pulling2": {"model": "crossbow:template", "textures": {"layer0": "crossbow:items/crossbow_pulling_2"}},
+
+        "arrow": {"model": "crossbow:template", "textures": {"layer0": "crossbow:items/ammo_arrow"}},
+        "firework": {"model": "crossbow:template", "textures": {"layer0": "crossbow:items/ammo_firework"}},
+        "spectral_arrow": {"model": "crossbow:template", "textures": {"layer0": "crossbow:items/ammo_spectral_arrow"}},
+        "tipped_arrow": {"model": "crossbow:template", "textures": {"layer0": "crossbow:items/ammo_tipped_arrow_head", "layer1": "crossbow:items/ammo_tipped_arrow_base"}}
+    }
+}
