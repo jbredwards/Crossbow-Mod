@@ -118,6 +118,7 @@ public interface ICrossbow
         if(arrowData != null) {
             arrowData.setHitSound(getArrowHitSound(user, crossbow, (EntityArrow)projectileEntity, projectile));
             arrowData.setPierceLevel(EnchantmentHelper.getEnchantmentLevel(CrossbowEnchantments.PIERCING, crossbow));
+            arrowData.setShotByCrossbow(true);
 
             if(user instanceof EntityPlayer) ((EntityArrow)projectileEntity).setIsCritical(true);
             if(multishotOffset != 0 || !ICrossbowProjectiles.applyPickupStatus(crossbow, (EntityArrow)projectileEntity) && isCreative) ((EntityArrow)projectileEntity).pickupStatus = EntityArrow.PickupStatus.CREATIVE_ONLY;

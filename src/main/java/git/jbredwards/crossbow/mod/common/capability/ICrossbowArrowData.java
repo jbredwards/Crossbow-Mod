@@ -54,6 +54,9 @@ public interface ICrossbowArrowData
     int getPierceLevel();
     void setPierceLevel(int level);
 
+    boolean wasShotByCrossbow();
+    void setShotByCrossbow(boolean flag);
+
     @Nullable
     static ICrossbowArrowData get(@Nullable ICapabilityProvider provider) {
         return provider != null && provider.hasCapability(CAPABILITY, null) ? provider.getCapability(CAPABILITY, null) : null;
@@ -76,6 +79,7 @@ public interface ICrossbowArrowData
     {
         @Nonnull
         protected SoundEvent hitSound = SoundEvents.ENTITY_ARROW_HIT;
+        protected boolean shotByCrossbow;
 
         @Nullable
         protected IntSet piercedEntities;
@@ -100,6 +104,12 @@ public interface ICrossbowArrowData
 
         @Override
         public void setPierceLevel(int level) { pierceLevel = level; }
+
+        @Override
+        public boolean wasShotByCrossbow() { return shotByCrossbow; }
+
+        @Override
+        public void setShotByCrossbow(boolean flag) { shotByCrossbow = flag; }
     }
 
     enum Storage implements Capability.IStorage<ICrossbowArrowData>
@@ -115,6 +125,8 @@ public interface ICrossbowArrowData
 
             final IntSet piercedEntities = instance.getPiercedEntities();
             if(piercedEntities != null) nbt.setIntArray("PiercedEntities", piercedEntities.toIntArray());
+
+            nbt.setBoolean("WasShotByCrossbow", instance.wasShotByCrossbow());
             return nbt;
         }
 
@@ -132,6 +144,10 @@ public interface ICrossbowArrowData
 
                 if(nbt.hasKey("PiercedEntities", Constants.NBT.TAG_INT_ARRAY)) {
                     instance.setPiercedEntities(new IntOpenHashSet(nbt.getIntArray("PiercedEntities")));
+                }
+
+                if(nbt.hasKey("WasShotByCrossbow", Constants.NBT.TAG_ANY_NUMERIC)) {
+                    instance.setShotByCrossbow(nbt.getBoolean("WasShotByCrossbow"));
                 }
             }
         }
