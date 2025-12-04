@@ -72,10 +72,13 @@ public class ItemCrossbow extends Item implements ICrossbow
 
     @Override
     public void onPlayerStoppedUsing(@Nonnull ItemStack stack, @Nonnull World worldIn, @Nonnull EntityLivingBase entityLiving, int timeLeft) {
-        if((float)(stack.getMaxItemUseDuration() - timeLeft) / getPullTime(stack) >= 1) {
+        if(!worldIn.isRemote && (float)(stack.getMaxItemUseDuration() - timeLeft) / getPullTime(stack) >= 1) {
             final ICrossbowProjectiles cap = ICrossbowProjectiles.get(stack);
-            if(cap != null && cap.isEmpty() && loadProjectiles(entityLiving, stack, cap))
-                entityLiving.playSound(getLoadingEndSound(entityLiving, stack), 1, 1 / (itemRand.nextFloat() * 0.5f + 1) + 0.2f);
+            if(cap != null && cap.isEmpty() && loadProjectiles(entityLiving, stack, cap)) {
+                worldIn.playSound(null, entityLiving.posX, entityLiving.posY, entityLiving.posZ,
+                        getLoadingEndSound(entityLiving, stack), entityLiving.getSoundCategory(),
+                        1, 1 / (itemRand.nextFloat() * 0.5f + 1) + 0.2f);
+            }
         }
     }
 
