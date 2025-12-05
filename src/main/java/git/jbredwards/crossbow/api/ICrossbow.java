@@ -9,7 +9,6 @@ import git.jbredwards.crossbow.api.capability.CapabilityCrossbowAmmo;
 import git.jbredwards.crossbow.api.capability.ICrossbowAmmo;
 import git.jbredwards.crossbow.mod.common.Crossbow;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowArrowData;
-import git.jbredwards.crossbow.mod.common.capability.ICrossbowFireworkData;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowProjectiles;
 import git.jbredwards.crossbow.mod.common.init.CrossbowEnchantments;
 import git.jbredwards.crossbow.mod.common.init.CrossbowSounds;
@@ -23,7 +22,6 @@ import net.minecraft.init.Enchantments;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.EnumAction;
-import net.minecraft.item.ItemFirework;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.SoundCategory;
@@ -50,12 +48,21 @@ public interface ICrossbow
     EnumAction CROSSBOW_ACTION = Objects.requireNonNull(EnumHelper.addAction(Crossbow.MODID + "_crossbow"));
 
     /**
-     * @return the angle separating each arrow (in degrees).
+     * @return The horizontal angle separating each projectile (in degrees) when firing multiple projectiles.
+     * The first projectile fired will not have this applied, unless the number of projectiles returned by {@link ICrossbow#getAmmoToLoad} is an even number.
+     *
+     * @throws NullPointerException If any parameters are null.
+     * @since 1.0.0
      */
-    default double getArrowSpread(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow) { return 10; }
+    default double getArrowSpread(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow) {
+        return 10;
+    }
 
     /**
-     * @return the number of projectiles to load into the crossbow.
+     * @return The number of projectiles to load into the crossbow. This does not change the amount of ammo consumed, which is always 1.
+     *
+     * @throws NullPointerException If any parameters are null.
+     * @since 1.0.0
      */
     default int getAmmoToLoad(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow) {
         return EnchantmentHelper.getEnchantmentLevel(CrossbowEnchantments.MULTISHOT, crossbow) > 0 ? 3 : 1;
@@ -109,13 +116,22 @@ public interface ICrossbow
         }
     }
 
+    /**
+     * @return The created projectile upon firing this crossbow, before it's summoned into the world.
+     * The crossbow firing sound and the projectile's velocity are both handled by {@link ICrossbow#shoot}.
+     *
+     * @throws NullPointerException If any parameters are null.
+     * @since 1.1.0
+     */
     @Nullable
     default IProjectile createProjectileFromStack(@Nonnull World world, @Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack projectile, @Nonnull ICrossbowAmmo ammoHandler, boolean isCreative, double multishotOffset) {
         final IProjectile projectileEntity = ammoHandler.createCrossbowProjectile(user, crossbow, projectile);
 
-        // apply arrow data if applicable
+        // apply data to arrow if applicable
         final ICrossbowArrowData arrowData = ICrossbowArrowData.get((Entity)projectileEntity);
         if(arrowData != null) {
+            if(user instanceof EntityPlayer && ForgeEventFactory.onArrowLoose(crossbow, world, (EntityPlayer)user, 1, true) < 0) return null;
+
             arrowData.setHitSound(getArrowHitSound(user, crossbow, (EntityArrow)projectileEntity, projectile));
             arrowData.setPierceLevel(EnchantmentHelper.getEnchantmentLevel(CrossbowEnchantments.PIERCING, crossbow));
             arrowData.setShotByCrossbow(true);
@@ -123,7 +139,6 @@ public interface ICrossbow
             if(user instanceof EntityPlayer) ((EntityArrow)projectileEntity).setIsCritical(true);
             if(multishotOffset != 0 || !ICrossbowProjectiles.applyPickupStatus(crossbow, (EntityArrow)projectileEntity) && isCreative) ((EntityArrow)projectileEntity).pickupStatus = EntityArrow.PickupStatus.CREATIVE_ONLY;
 
-            if(user instanceof EntityPlayer && ForgeEventFactory.onArrowLoose(crossbow, world, (EntityPlayer)user, 1, true) < 0) return null;
             if(Crossbow.Cfg.allowBowEnchantments) {
                 if(EnchantmentHelper.getEnchantmentLevel(Enchantments.FLAME, crossbow) > 0) ((EntityArrow)projectileEntity).setFire(100);
 
@@ -135,11 +150,10 @@ public interface ICrossbow
             }
         }
 
-        // apply firework data if applicable
-        final ICrossbowFireworkData fireworkData = ICrossbowFireworkData.get((Entity)projectileEntity);
-        if(fireworkData != null) {
-            fireworkData.setOwner(user);
-            fireworkData.setShotByCrossbow(true);
+        // apply data to other projectiles if applicable
+        else if(projectileEntity instanceof ICrossbowProjectile) {
+            ((ICrossbowProjectile)projectileEntity).setShooter(user);
+            ((ICrossbowProjectile)projectileEntity).setShotByCrossbow(true);
         }
 
         return projectileEntity;

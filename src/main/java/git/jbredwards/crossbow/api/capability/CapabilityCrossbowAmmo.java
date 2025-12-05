@@ -29,6 +29,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
+ * Capability handler for {@link ICrossbowAmmo}.
  *
  * @since 1.1.0
  * @author jbred

@@ -7,6 +7,7 @@ package git.jbredwards.crossbow.mod.asm.transformer;
 
 import com.google.common.base.Predicates;
 import git.jbredwards.crossbow.api.FireworkImpactEvent;
+import git.jbredwards.crossbow.api.ICrossbowProjectile;
 import git.jbredwards.crossbow.mod.asm.ASMHandler;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowFireworkData;
 import net.minecraft.block.state.IBlockState;
@@ -19,6 +20,7 @@ import net.minecraft.util.EntitySelectors;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.ClassReader;
@@ -28,6 +30,7 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.tree.*;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Comparator;
 import java.util.Random;
 
@@ -149,7 +152,7 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
              * }
              */
             ASMHandler.LOGGER.debug("transforming - EntityFireworkRocket::shoot");
-            classNode.interfaces.add("net/minecraft/entity/IProjectile");
+            classNode.interfaces.add("git/jbredwards/crossbow/mod/asm/transformer/TransformerEntityFireworkRocket$Wrapper");
             final MethodNode method = new MethodNode(ACC_PUBLIC, FMLLaunchHandler.isDeobfuscatedEnvironment() ? "shoot" : "func_70186_c", "(DDDFF)V", null, null);
             final GeneratorAdapter methodAdapter = new GeneratorAdapter(method, ACC_PUBLIC, method.name, method.desc);
             methodAdapter.visitVarInsn(ALOAD, 0);
@@ -244,5 +247,22 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
             entity.motionY = y;
             entity.motionZ = z;
         }
+    }
+
+    @SuppressWarnings("DataFlowIssue")
+    public interface Wrapper extends ICrossbowProjectile, ICapabilityProvider
+    {
+        @Override
+        default boolean wasShotByCrossbow() { return ICrossbowFireworkData.get(this).wasShotByCrossbow(); }
+
+        @Override
+        default void setShotByCrossbow(final boolean shotByCrossbow) { ICrossbowFireworkData.get(this).setShotByCrossbow(shotByCrossbow); }
+
+        @Nullable
+        @Override
+        default Entity getShooter() { return ICrossbowFireworkData.get(this).getOwner(); }
+
+        @Override
+        default void setShooter(@Nullable final Entity shooter) { ICrossbowFireworkData.get(this).setOwner(shooter); }
     }
 }

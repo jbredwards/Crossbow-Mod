@@ -6,6 +6,7 @@
 package git.jbredwards.crossbow.mod.asm.transformer;
 
 import com.google.common.base.Predicate;
+import git.jbredwards.crossbow.api.ICrossbowProjectile;
 import git.jbredwards.crossbow.mod.asm.ASMHandler;
 import git.jbredwards.crossbow.mod.common.Crossbow;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowArrowData;
@@ -18,6 +19,7 @@ import net.minecraft.launchwrapper.IClassTransformer;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -211,6 +213,7 @@ public final class TransformerEntityArrow implements IClassTransformer, Opcodes
             }
 
             //writes the changes
+            classNode.interfaces.add("git/jbredwards/crossbow/mod/asm/transformer/TransformerEntityArrow$Wrapper");
             final ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
             classNode.accept(writer);
             return writer.toByteArray();
@@ -286,5 +289,22 @@ public final class TransformerEntityArrow implements IClassTransformer, Opcodes
             final ICrossbowArrowData cap = ICrossbowArrowData.get(arrow);
             return cap == null ? original : target -> original.apply(target) && (cap.getPiercedEntities() == null || !cap.getPiercedEntities().contains(target.getEntityId()));
         }
+    }
+
+    @SuppressWarnings("DataFlowIssue")
+    public interface Wrapper extends ICrossbowProjectile, ICapabilityProvider
+    {
+        @Override
+        default boolean wasShotByCrossbow() { return ICrossbowArrowData.get(this).wasShotByCrossbow(); }
+
+        @Override
+        default void setShotByCrossbow(final boolean shotByCrossbow) { ICrossbowArrowData.get(this).setShotByCrossbow(shotByCrossbow); }
+
+        @Nullable
+        @Override
+        default Entity getShooter() { return ((EntityArrow)this).shootingEntity; }
+
+        @Override
+        default void setShooter(@Nullable final Entity shooter) { ((EntityArrow)this).shootingEntity = shooter; }
     }
 }

@@ -47,6 +47,16 @@ public interface ICrossbowProjectiles extends List<ItemStack>
     @Nullable
     EntityArrow.PickupStatus getPickupStatus();
     void setPickupStatus(@Nullable final EntityArrow.PickupStatus pickupStatus);
+    static boolean applyPickupStatus(@Nullable final ICapabilityProvider provider, @Nonnull final EntityArrow arrow) {
+        @Nullable final ICrossbowProjectiles cap = get(provider);
+        if(cap == null) return false;
+
+        @Nullable final EntityArrow.PickupStatus status = cap.getPickupStatus();
+        if(status == null) return false;
+
+        arrow.pickupStatus = status;
+        return true;
+    }
 
     @Nonnull
     default ItemStack findAmmo(@Nonnull final EntityLivingBase user, @Nonnull final ItemStack crossbow) {
@@ -61,17 +71,6 @@ public interface ICrossbowProjectiles extends List<ItemStack>
     @SubscribeEvent
     static void attach(@Nonnull final AttachCapabilitiesEvent<ItemStack> event) {
         if(event.getObject().getItem() instanceof ICrossbow) event.addCapability(CAPABILITY_ID, new CapabilityProvider<>(CAPABILITY, new Impl(event.getObject())));
-    }
-
-    static boolean applyPickupStatus(@Nullable final ICapabilityProvider provider, @Nonnull final EntityArrow arrow) {
-        @Nullable final ICrossbowProjectiles cap = get(provider);
-        if(cap == null) return false;
-
-        @Nullable final EntityArrow.PickupStatus status = cap.getPickupStatus();
-        if(status == null) return false;
-
-        arrow.pickupStatus = status;
-        return true;
     }
 
     class Impl extends AbstractList<ItemStack> implements ICrossbowProjectiles
