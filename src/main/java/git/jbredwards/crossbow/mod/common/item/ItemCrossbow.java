@@ -10,8 +10,10 @@ import git.jbredwards.crossbow.mod.common.Crossbow;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowProjectiles;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowSoundData;
 import git.jbredwards.crossbow.mod.common.init.CrossbowEnchantments;
+import git.jbredwards.crossbow.mod.common.init.CrossbowItems;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.EnumEnchantmentType;
@@ -47,6 +49,12 @@ import java.util.stream.Collectors;
  */
 public class ItemCrossbow extends Item implements ICrossbow
 {
+    @Nonnull
+    @Override
+    public CreativeTabs[] getCreativeTabs() {
+        return new CreativeTabs[] {CrossbowItems.TAB, getCreativeTab()};
+    }
+
     @Nonnull
     @Override
     public ActionResult<ItemStack> onItemRightClick(@Nonnull World worldIn, @Nonnull EntityPlayer playerIn, @Nonnull EnumHand handIn) {
