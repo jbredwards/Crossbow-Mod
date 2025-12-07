@@ -42,13 +42,13 @@ public class RenderFirework extends Render<EntityFireworkRocket>
         GlStateManager.rotate((renderManager.options.thirdPersonView == 2 ? -1 : 1) * renderManager.playerViewX, 1, 0, 0);
 
         final ICrossbowFireworkData cap = ICrossbowFireworkData.get(entity);
-        if(cap == null || !cap.wasShotByCrossbow()) GlStateManager.rotate(180, 0, 1, 0);
+        if(cap == null || !cap.isShotAtAngle()) GlStateManager.rotate(180, 0, 1, 0);
         else GlStateManager.rotate(90, 1, 0, 0);
 
         bindEntityTexture(entity);
         if(renderOutlines) {
             GlStateManager.enableColorMaterial();
-            GlStateManager.enableOutlineMode(this.getTeamColor(entity));
+            GlStateManager.enableOutlineMode(getTeamColor(entity));
         }
 
         final ItemStack stack = entity.getDataManager().get(EntityFireworkRocket.FIREWORK_ITEM);

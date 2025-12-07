@@ -53,7 +53,6 @@ public final class InternalAssetHandler extends DummyModContainer
                 .put("assets/minecraft/sounds/item/crossbow/shoot1.ogg", "assets/crossbow/sounds/shoot1.ogg")
                 .put("assets/minecraft/sounds/item/crossbow/shoot2.ogg", "assets/crossbow/sounds/shoot2.ogg")
                 .put("assets/minecraft/sounds/item/crossbow/shoot3.ogg", "assets/crossbow/sounds/shoot3.ogg")
-                .put("assets/minecraft/textures/item/crossbow_arrow.png", "assets/crossbow/textures/items/crossbow_arrow.png")
                 .put("assets/minecraft/textures/item/crossbow_pulling_0.png", "assets/crossbow/textures/items/crossbow_pulling_0.png")
                 .put("assets/minecraft/textures/item/crossbow_pulling_1.png", "assets/crossbow/textures/items/crossbow_pulling_1.png")
                 .put("assets/minecraft/textures/item/crossbow_pulling_2.png", "assets/crossbow/textures/items/crossbow_pulling_2.png")

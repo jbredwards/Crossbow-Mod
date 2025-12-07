@@ -26,22 +26,26 @@ import javax.annotation.Nullable;
 public class MessageSyncArrowData implements IMessage
 {
     public int arrowId, piercingLvl;
+    public boolean wasShotFromCrossbow;
 
     public MessageSyncArrowData() {}
-    public MessageSyncArrowData(int arrowIdIn, int piercingLvlIn) {
+    public MessageSyncArrowData(int arrowIdIn, @Nonnull ICrossbowArrowData dataIn) {
         arrowId = arrowIdIn;
-        piercingLvl = piercingLvlIn;
+        piercingLvl = dataIn.getPierceLevel();
+        wasShotFromCrossbow = dataIn.wasShotByCrossbow();
     }
 
     @Override
     public void fromBytes(@Nonnull ByteBuf buf) {
         arrowId = new PacketBuffer(buf).readVarInt();
         piercingLvl = new PacketBuffer(buf).readVarInt();
+        wasShotFromCrossbow = buf.readBoolean();
     }
 
     @Override
     public void toBytes(@Nonnull ByteBuf buf) {
         new PacketBuffer(buf).writeVarInt(arrowId).writeVarInt(piercingLvl);
+        buf.writeBoolean(wasShotFromCrossbow);
     }
 
     public enum Handler implements IMessageHandler<MessageSyncArrowData, IMessage>
@@ -51,15 +55,18 @@ public class MessageSyncArrowData implements IMessage
         @Nullable
         @Override
         public IMessage onMessage(@Nonnull MessageSyncArrowData message, @Nonnull MessageContext ctx) {
-            handleSync(message.arrowId, message.piercingLvl);
+            if(ctx.side.isClient()) handleSync(message);
             return null;
         }
 
         @SideOnly(Side.CLIENT)
-        static void handleSync(int arrowId, int piercingLvl) {
+        static void handleSync(@Nonnull MessageSyncArrowData message) {
             Minecraft.getMinecraft().addScheduledTask(() -> {
-                final ICrossbowArrowData cap = ICrossbowArrowData.get(Minecraft.getMinecraft().world.getEntityByID(arrowId));
-                if(cap != null) cap.setPierceLevel(piercingLvl);
+                final ICrossbowArrowData cap = ICrossbowArrowData.get(Minecraft.getMinecraft().world.getEntityByID(message.arrowId));
+                if(cap != null) {
+                    cap.setPierceLevel(message.piercingLvl);
+                    cap.setShotByCrossbow(message.wasShotFromCrossbow);
+                }
             });
         }
     }

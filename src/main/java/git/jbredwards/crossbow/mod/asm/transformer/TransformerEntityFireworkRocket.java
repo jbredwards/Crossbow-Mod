@@ -180,7 +180,7 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
     {
         public static void correctVelocity(@Nonnull Entity entity) {
             final ICrossbowFireworkData cap = ICrossbowFireworkData.get(entity);
-            if(cap != null && cap.wasShotByCrossbow()) {
+            if(cap != null && cap.isShotAtAngle()) {
                 entity.motionX /= 1.15;
                 entity.motionY -= 0.04;
                 entity.motionZ /= 1.15;
@@ -246,6 +246,8 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
             entity.motionX = x;
             entity.motionY = y;
             entity.motionZ = z;
+
+            ICrossbowFireworkData.get(entity).setShotAtAngle(true);
         }
     }
 

@@ -23,7 +23,6 @@ import net.minecraft.init.Items;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.EnumAction;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumHand;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.Vec3d;
@@ -162,8 +161,8 @@ public interface ICrossbow
     @Nonnull
     default ItemStack findAmmo(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow) {
         if(user instanceof ICrossbowUser) return ((ICrossbowUser)user).findAmmo(crossbow);
-        else if(isHeldProjectile(user, crossbow, user.getHeldItem(EnumHand.OFF_HAND))) return user.getHeldItem(EnumHand.OFF_HAND);
-        else if(isHeldProjectile(user, crossbow, user.getHeldItem(EnumHand.MAIN_HAND))) return user.getHeldItem(EnumHand.MAIN_HAND);
+        else if(isHeldProjectile(user, crossbow, user.getHeldItemOffhand())) return user.getHeldItemOffhand();
+        else if(isHeldProjectile(user, crossbow, user.getHeldItemMainhand())) return user.getHeldItemMainhand();
 
         if(user instanceof EntityPlayer) {
             final IInventory inventory = ((EntityPlayer)user).inventory;

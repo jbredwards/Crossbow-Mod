@@ -51,6 +51,9 @@ public interface ICrossbowFireworkData
     boolean wasShotByCrossbow();
     void setShotByCrossbow(boolean flag);
 
+    boolean isShotAtAngle();
+    void setShotAtAngle(boolean flag);
+
     @Nullable
     static ICrossbowFireworkData get(@Nullable ICapabilityProvider provider) {
         return provider != null && provider.hasCapability(CAPABILITY, null) ? provider.getCapability(CAPABILITY, null) : null;
@@ -65,7 +68,7 @@ public interface ICrossbowFireworkData
     static void sync(@Nonnull PlayerEvent.StartTracking event) {
         if(event.getEntityPlayer() instanceof EntityPlayerMP) {
             final ICrossbowFireworkData cap = get(event.getTarget());
-            if(cap != null) Crossbow.WRAPPER.sendTo(new MessageSyncFireworkData(event.getTarget().getEntityId(), cap.wasShotByCrossbow()), (EntityPlayerMP)event.getEntityPlayer());
+            if(cap != null) Crossbow.WRAPPER.sendTo(new MessageSyncFireworkData(event.getTarget().getEntityId(), cap), (EntityPlayerMP)event.getEntityPlayer());
         }
     }
 
@@ -74,7 +77,7 @@ public interface ICrossbowFireworkData
         @Nullable protected UUID ownerUUID;
         @Nullable protected Entity cachedOwner;
         @Nullable protected World world;
-        protected boolean shotByCrossbow;
+        protected boolean shotByCrossbow, shotAtAngle;
 
         public Impl() {}
         public Impl(@Nullable World worldIn) { world = worldIn; }
@@ -109,6 +112,12 @@ public interface ICrossbowFireworkData
 
         @Override
         public void setShotByCrossbow(boolean flag) { shotByCrossbow = flag; }
+
+        @Override
+        public boolean isShotAtAngle() { return shotAtAngle; }
+
+        @Override
+        public void setShotAtAngle(boolean flag) { shotAtAngle = flag; }
     }
 
     enum Storage implements Capability.IStorage<ICrossbowFireworkData>
@@ -120,7 +129,9 @@ public interface ICrossbowFireworkData
         public NBTBase writeNBT(@Nonnull Capability<ICrossbowFireworkData> capability, @Nonnull ICrossbowFireworkData instance, @Nullable EnumFacing side) {
             final NBTTagCompound nbt = new NBTTagCompound();
             if(instance.getOwnerUUID() != null) nbt.setUniqueId("Owner", instance.getOwnerUUID());
+
             nbt.setBoolean("WasShotByCrossbow", instance.wasShotByCrossbow());
+            nbt.setBoolean("ShotAtAngle", instance.isShotAtAngle());
             return nbt;
         }
 
@@ -129,7 +140,9 @@ public interface ICrossbowFireworkData
             if(nbtIn instanceof NBTTagCompound) {
                 final NBTTagCompound nbt = (NBTTagCompound)nbtIn;
                 if(nbt.hasUniqueId("Owner")) instance.setOwnerUUID(nbt.getUniqueId("Owner"));
+
                 instance.setShotByCrossbow(nbt.getBoolean("WasShotByCrossbow"));
+                instance.setShotAtAngle(instance.wasShotByCrossbow() || nbt.getBoolean("ShotAtAngle"));
             }
         }
     }

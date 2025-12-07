@@ -26,24 +26,26 @@ import javax.annotation.Nullable;
 public class MessageSyncFireworkData implements IMessage
 {
     public int fireworkId;
-    public boolean wasShotFromCrossbow;
+    public boolean wasShotFromCrossbow, shotAtAngle;
 
     public MessageSyncFireworkData() {}
-    public MessageSyncFireworkData(int fireworkIdIn, boolean wasShotFromCrossbowIn) {
+    public MessageSyncFireworkData(int fireworkIdIn, @Nonnull ICrossbowFireworkData dataIn) {
         fireworkId = fireworkIdIn;
-        wasShotFromCrossbow = wasShotFromCrossbowIn;
+        wasShotFromCrossbow = dataIn.wasShotByCrossbow();
+        shotAtAngle = dataIn.isShotAtAngle();
     }
 
     @Override
     public void fromBytes(@Nonnull ByteBuf buf) {
         fireworkId = new PacketBuffer(buf).readVarInt();
         wasShotFromCrossbow = buf.readBoolean();
+        shotAtAngle = buf.readBoolean();
     }
 
     @Override
     public void toBytes(@Nonnull ByteBuf buf) {
         new PacketBuffer(buf).writeVarInt(fireworkId);
-        buf.writeBoolean(wasShotFromCrossbow);
+        buf.writeBoolean(wasShotFromCrossbow).writeBoolean(shotAtAngle);
     }
 
     public enum Handler implements IMessageHandler<MessageSyncFireworkData, IMessage>
@@ -53,15 +55,18 @@ public class MessageSyncFireworkData implements IMessage
         @Nullable
         @Override
         public IMessage onMessage(@Nonnull MessageSyncFireworkData message, @Nonnull MessageContext ctx) {
-            handleSync(message.fireworkId, message.wasShotFromCrossbow);
+            if(ctx.side.isClient()) handleSync(message);
             return null;
         }
 
         @SideOnly(Side.CLIENT)
-        static void handleSync(int fireworkId, boolean wasShotFromCrossbow) {
+        static void handleSync(@Nonnull MessageSyncFireworkData message) {
             Minecraft.getMinecraft().addScheduledTask(() -> {
-                final ICrossbowFireworkData cap = ICrossbowFireworkData.get(Minecraft.getMinecraft().world.getEntityByID(fireworkId));
-                if(cap != null) cap.setShotByCrossbow(wasShotFromCrossbow);
+                final ICrossbowFireworkData cap = ICrossbowFireworkData.get(Minecraft.getMinecraft().world.getEntityByID(message.fireworkId));
+                if(cap != null) {
+                    cap.setShotByCrossbow(message.wasShotFromCrossbow);
+                    cap.setShotAtAngle(message.shotAtAngle);
+                }
             });
         }
     }

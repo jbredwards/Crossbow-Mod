@@ -71,7 +71,7 @@ public interface ICrossbowArrowData
     static void sync(@Nonnull PlayerEvent.StartTracking event) {
         if(event.getEntityPlayer() instanceof EntityPlayerMP) {
             final ICrossbowArrowData cap = get(event.getTarget());
-            if(cap != null) Crossbow.WRAPPER.sendTo(new MessageSyncArrowData(event.getTarget().getEntityId(), cap.getPierceLevel()), (EntityPlayerMP)event.getEntityPlayer());
+            if(cap != null) Crossbow.WRAPPER.sendTo(new MessageSyncArrowData(event.getTarget().getEntityId(), cap), (EntityPlayerMP)event.getEntityPlayer());
         }
     }
 
