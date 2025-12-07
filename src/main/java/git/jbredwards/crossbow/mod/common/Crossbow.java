@@ -59,6 +59,9 @@ public final class Crossbow
     {
         @Config.LangKey("config." + MODID + ".allowBowEnchantments")
         public static boolean allowBowEnchantments = false;
+
+        @Config.LangKey("config." + MODID + ".replaceFireworkDispenseBehavior")
+        public static boolean replaceFireworkDispenseBehavior = false;
     }
 
     @SubscribeEvent

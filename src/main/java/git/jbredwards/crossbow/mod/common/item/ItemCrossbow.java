@@ -34,9 +34,11 @@ import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.ItemHandlerHelper;
+import org.apache.commons.lang3.tuple.MutablePair;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -199,11 +201,26 @@ public class ItemCrossbow extends Item implements ICrossbow
     public void addInformation(@Nonnull ItemStack stack, @Nullable World worldIn, @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flagIn) {
         final ICrossbowProjectiles cap = ICrossbowProjectiles.get(stack);
         if(cap != null && !cap.isEmpty()) {
-            final ItemStack projectile = cap.get(0);
-            tooltip.add(I18n.format("tooltip.crossbow.crossbow.projectile", projectile.getTextComponent().getFormattedText()));
-            if(flagIn.isAdvanced()) {
+            @Nonnull final ItemStack[] projectiles = cap.toArray(new ItemStack[0]);
+            @Nonnull final List<MutablePair<Integer, ItemStack>> sorted = new ArrayList<>(projectiles.length);
+
+            counter: // Group duplicate projectiles.
+            for(@Nonnull final ItemStack projectile : projectiles) {
+                for(@Nonnull final MutablePair<Integer, ItemStack> counted : sorted) {
+                    if(ItemStack.areItemStacksEqual(projectile, counted.right)) {
+                        counted.left++;
+                        continue counter;
+                    }
+                }
+
+                sorted.add(MutablePair.of(1, projectile));
+            }
+
+            for(@Nonnull final MutablePair<Integer, ItemStack> counted : sorted) {
+                tooltip.add(TextFormatting.RESET + I18n.format("tooltip.crossbow.crossbow.projectile", (counted.left == 1 ? "" : counted.left + " x ") + counted.right.getTextComponent().getFormattedText()));
+
                 final List<String> subTooltip = new LinkedList<>();
-                projectile.getItem().addInformation(projectile, worldIn, subTooltip, flagIn);
+                counted.right.getItem().addInformation(counted.right, worldIn, subTooltip, flagIn);
                 if(!subTooltip.isEmpty()) tooltip.addAll(subTooltip.stream().map(str -> "  " + TextFormatting.GRAY + str).collect(Collectors.toCollection(LinkedList::new)));
             }
         }
