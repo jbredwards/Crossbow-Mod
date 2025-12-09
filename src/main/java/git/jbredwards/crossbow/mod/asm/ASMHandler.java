@@ -5,12 +5,17 @@
 
 package git.jbredwards.crossbow.mod.asm;
 
+import com.google.common.collect.Lists;
+import git.jbredwards.crossbow.mod.asm.transformer.*;
+import git.jbredwards.crossbow.mod.asm.transformer.modded.*;
+import net.minecraft.launchwrapper.IClassTransformer;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,21 +33,25 @@ public final class ASMHandler implements IFMLLoadingPlugin
 
     @Nonnull
     @Override
-    public String[] getASMTransformerClass() {
-        return new String[] {
-                "git.jbredwards.crossbow.mod.asm.transformer.TransformerEntityArrow",
-                "git.jbredwards.crossbow.mod.asm.transformer.TransformerEntityFireworkRocket",
-                "git.jbredwards.crossbow.mod.asm.transformer.TransformerEntityLivingBase",
-                "git.jbredwards.crossbow.mod.asm.transformer.TransformerModelBiped",
-                "git.jbredwards.crossbow.mod.asm.transformer.TransformerRenderPlayer",
+    public String[] getASMTransformerClass() { return new String[] {"git.jbredwards.crossbow.mod.asm.ASMHandler$Transformer"}; }
+    public static final class Transformer implements IClassTransformer
+    {
+        @Nonnull
+        private static final List<IClassTransformer> transformers = Lists.newArrayList(
+                new TransformerEntityArrow(),
+                new TransformerEntityFireworkRocket(),
+                new TransformerEntityLivingBase(),
+                new TransformerModelBiped(),
+                new TransformerRenderPlayer(),
                 //modded
-                "git.jbredwards.crossbow.mod.asm.transformer.modded.TransformerSpartanWeaponry"
-        };
-    }
+                new TransformerSpartanWeaponry());
 
-    @Nonnull
-    @Override
-    public String getModContainerClass() { return "git.jbredwards.crossbow.mod.client.InternalAssetHandler"; }
+        @Nullable
+        @Override
+        public byte[] transform(@Nullable final String name, @Nullable final String transformedName, @Nullable final byte[] basicClass) {
+            return basicClass != null && transformedName != null ? transformers.stream().reduce(basicClass, (bc, ct) -> ct.transform(name, transformedName, bc), (bc1, bc2) -> bc2) : basicClass;
+        }
+    }
 
     // -----
     // NO-OP
@@ -50,6 +59,10 @@ public final class ASMHandler implements IFMLLoadingPlugin
 
     @Override
     public void injectData(@Nonnull final Map<String, Object> data) {}
+
+    @Nullable
+    @Override
+    public String getModContainerClass() { return null; }
 
     @Nullable
     @Override
