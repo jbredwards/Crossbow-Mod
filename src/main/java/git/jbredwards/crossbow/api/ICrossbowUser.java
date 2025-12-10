@@ -9,6 +9,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.IProjectile;
+import net.minecraft.entity.monster.IMob;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Vec3d;
 
@@ -43,6 +44,22 @@ public interface ICrossbowUser
      * @since 1.0.0
      */
     void setCharging(final boolean charging);
+
+    /**
+     * @return True if this entity damages crossbows when firing them.
+     * @since 1.2.0
+     */
+    default boolean damagesCrossbow() {
+        return !(this instanceof IMob);
+    }
+
+    /**
+     * @return True if this entity has infinite crossbow ammo.
+     * @since 1.2.0
+     */
+    default boolean infiniteAmmo() {
+        return this instanceof IMob;
+    }
 
     /**
      * Used by {@link ICrossbow#shoot}. Prepares the projectile to be fired. May be overriden.

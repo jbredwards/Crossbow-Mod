@@ -113,8 +113,8 @@ public class ItemCrossbow extends Item implements ICrossbow
                 ammoCopy = new ItemStack(Items.ARROW);
             }
 
-            if(!loadProjectile(user, cap, ammo, isCreative || user instanceof ICrossbowUser || Crossbow.Cfg.allowBowEnchantments && user instanceof EntityPlayer
-            && ammo.getItem() instanceof ItemArrow && ((ItemArrow)ammo.getItem()).isInfinite(ammo, crossbow, (EntityPlayer)user))) return false;
+            if(!loadProjectile(user, cap, ammo, isCreative || user instanceof ICrossbowUser && ((ICrossbowUser)user).infiniteAmmo() || Crossbow.Cfg.allowBowEnchantments
+            && user instanceof EntityPlayer && ammo.getItem() instanceof ItemArrow && ((ItemArrow)ammo.getItem()).isInfinite(ammo, crossbow, (EntityPlayer)user))) return false;
         }
 
         return true;

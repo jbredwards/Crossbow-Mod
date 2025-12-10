@@ -193,7 +193,7 @@ public interface ICrossbow
             }
 
             world.spawnEntity((Entity)projectileEntity);
-            if(!isCreative && !(user instanceof ICrossbowUser)) ammoHandler.damageCrossbow(user, crossbow, projectile);
+            if(!isCreative && (!(user instanceof ICrossbowUser) || ((ICrossbowUser)user).damagesCrossbow())) ammoHandler.damageCrossbow(user, crossbow, projectile);
         }
     }
 
