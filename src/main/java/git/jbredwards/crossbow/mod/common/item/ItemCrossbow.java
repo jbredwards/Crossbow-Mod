@@ -6,6 +6,7 @@
 package git.jbredwards.crossbow.mod.common.item;
 
 import git.jbredwards.crossbow.api.ICrossbow;
+import git.jbredwards.crossbow.api.ICrossbowUser;
 import git.jbredwards.crossbow.mod.common.Crossbow;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowProjectiles;
 import git.jbredwards.crossbow.mod.common.capability.ICrossbowSoundData;
@@ -112,7 +113,7 @@ public class ItemCrossbow extends Item implements ICrossbow
                 ammoCopy = new ItemStack(Items.ARROW);
             }
 
-            if(!loadProjectile(user, cap, ammo, isCreative || Crossbow.Cfg.allowBowEnchantments && user instanceof EntityPlayer
+            if(!loadProjectile(user, cap, ammo, isCreative || user instanceof ICrossbowUser || Crossbow.Cfg.allowBowEnchantments && user instanceof EntityPlayer
             && ammo.getItem() instanceof ItemArrow && ((ItemArrow)ammo.getItem()).isInfinite(ammo, crossbow, (EntityPlayer)user))) return false;
         }
 
@@ -136,7 +137,7 @@ public class ItemCrossbow extends Item implements ICrossbow
 
     public static void shootAll(@Nonnull World world, @Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ICrossbowProjectiles cap, float speed, float divergence) {
         if(!world.isRemote) {
-            final float[] soundPitches = getSoundPitches(user.getRNG());
+            final float[] soundPitches = ICrossbow.getFiringSoundPitches(user.getRNG());
             final boolean isCreative = user instanceof EntityPlayer && ((EntityPlayer)user).isCreative();
             final double spread = ((ICrossbow)crossbow.getItem()).getArrowSpread(user, crossbow) / 2;
 
@@ -144,23 +145,22 @@ public class ItemCrossbow extends Item implements ICrossbow
                 final ItemStack projectile = cap.get(i);
                 if(!projectile.isEmpty()) {
                     final double offset = (i & 1) == 0 ? (cap.size() & 1) == 0 ? i + 1 : i : 1 - i - ((cap.size() & 1) == 0 ? 1 : 2);
-                    ((ICrossbow)crossbow.getItem()).shoot(world, user, crossbow, projectile, soundPitches[i > 0 ? ((i & 2) >> 1) + 1 : 0], isCreative, speed, divergence, offset * spread);
+                    ((ICrossbow)crossbow.getItem()).shoot(world, user, crossbow, projectile, soundPitches[ICrossbow.getFiringSoundPitchIndex(i)], isCreative, speed, divergence, offset * spread);
                 }
             }
         }
 
         cap.clear();
-        cap.setPickupStatus(null);
     }
 
+    @Deprecated
     protected static float[] getSoundPitches(@Nonnull Random random) {
-        final boolean flag = random.nextBoolean();
-        return new float[] {1, getSoundPitch(flag), getSoundPitch(!flag)};
+        return ICrossbow.getFiringSoundPitches(random);
     }
 
+    @Deprecated
     protected static float getSoundPitch(boolean flag) {
-        final float constant = flag ? 0.63f : 0.43f;
-        return 1 / (itemRand.nextFloat() * 0.5f + 1.8f) + constant;
+        return ICrossbow.getFiringSoundPitches(itemRand)[1];
     }
 
     @Override
@@ -217,7 +217,7 @@ public class ItemCrossbow extends Item implements ICrossbow
             }
 
             for(@Nonnull final MutablePair<Integer, ItemStack> counted : sorted) {
-                tooltip.add(TextFormatting.RESET + I18n.format("tooltip.crossbow.crossbow.projectile", (counted.left == 1 ? "" : counted.left + " x ") + counted.right.getTextComponent().getFormattedText()));
+                tooltip.add(I18n.format("tooltip.crossbow.crossbow.projectile", TextFormatting.RESET + (counted.left == 1 ? "" : counted.left + " x ") + counted.right.getTextComponent().getFormattedText()));
 
                 final List<String> subTooltip = new LinkedList<>();
                 counted.right.getItem().addInformation(counted.right, worldIn, subTooltip, flagIn);

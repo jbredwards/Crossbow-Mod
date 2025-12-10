@@ -34,6 +34,8 @@ import java.util.Set;
 public interface ICrossbowAmmo
 {
     /**
+     * Should only be modified during or before fml pre-init.
+     * <p>Holds all model locations for ammo while it's loaded in a crossbow.</p>
      * @since 1.2.0
      */
     @Nonnull
@@ -51,7 +53,8 @@ public interface ICrossbowAmmo
     }
 
     /**
-     * @return A map of colors used by loaded Crossbows to render this ammo ItemStack, where the keys are tint indexes.
+     * @return A map of colors used by loaded Crossbows to render this ammo ItemStack, where
+     * the keys are tint indexes and the values are ARGB colors.
      * @since 1.2.0
      */
     @Nonnull

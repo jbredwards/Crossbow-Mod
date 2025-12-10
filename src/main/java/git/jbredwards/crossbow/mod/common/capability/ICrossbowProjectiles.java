@@ -150,6 +150,12 @@ public interface ICrossbowProjectiles extends List<ItemStack>
             if(!crossbow.hasTagCompound() || !crossbow.getTagCompound().hasKey(AMMO_NBT, Constants.NBT.TAG_LIST)) return 0;
             else return crossbow.getTagCompound().getTagList(AMMO_NBT, Constants.NBT.TAG_COMPOUND).tagCount();
         }
+
+        @Override
+        public void clear() {
+            super.clear();
+            setPickupStatus(null);
+        }
     }
 
     enum Storage implements Capability.IStorage<ICrossbowProjectiles>
