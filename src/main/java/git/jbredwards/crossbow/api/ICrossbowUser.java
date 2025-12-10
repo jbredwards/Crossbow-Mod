@@ -10,6 +10,7 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.IProjectile;
 import net.minecraft.entity.monster.IMob;
+import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Vec3d;
 
@@ -26,7 +27,7 @@ import javax.annotation.Nullable;
 public interface ICrossbowUser
 {
     /**
-     * Most of the time calls {@link ICrossbow#isHeldProjectile}, with a fallback to normal arrows.
+     * Most of the time calls {@link ICrossbow#isHeldProjectile} with a fallback to {@link ItemStack#EMPTY}.
      * @return The ammo ItemStack from the user's inventory to be loaded into this crossbow.
      *
      * @throws NullPointerException If any parameters are null.
@@ -59,6 +60,15 @@ public interface ICrossbowUser
      */
     default boolean infiniteAmmo() {
         return this instanceof IMob;
+    }
+
+    /**
+     * @return The fallback ammo ItemStack for when {@link ICrossbowUser#findAmmo} is empty and {@link ICrossbowUser#infiniteAmmo} is true.
+     * @since 1.2.0
+     */
+    @Nonnull
+    default ItemStack getInfiniteAmmo() {
+        return new ItemStack(Items.ARROW);
     }
 
     /**

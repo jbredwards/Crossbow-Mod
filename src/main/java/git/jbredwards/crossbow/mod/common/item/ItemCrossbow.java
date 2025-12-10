@@ -101,20 +101,18 @@ public class ItemCrossbow extends Item implements ICrossbow
 
     public static boolean loadProjectiles(@Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ICrossbowProjectiles cap) {
         final int ammoToLoad = ((ICrossbow)crossbow.getItem()).getAmmoToLoad(user, crossbow);
-        final boolean isCreative = user instanceof EntityPlayer && ((EntityPlayer)user).isCreative();
+        final boolean isCreative = user instanceof EntityPlayer && ((EntityPlayer)user).isCreative() || user instanceof ICrossbowUser && ((ICrossbowUser)user).infiniteAmmo();
 
         ItemStack ammo = cap.findAmmo(user, crossbow);
         ItemStack ammoCopy = ammo.copy();
 
+        if(ammo.isEmpty() && !isCreative) return false;
         for(int ammoLoaded = 0; ammoLoaded < ammoToLoad; ammoLoaded++) {
-            if(ammoLoaded > 0) ammo = ammoCopy.copy();
-            if(ammo.isEmpty() && isCreative) {
-                ammo = new ItemStack(Items.ARROW);
-                ammoCopy = new ItemStack(Items.ARROW);
-            }
+            if(ammo.isEmpty() && isCreative) ammoCopy = (ammo = user instanceof ICrossbowUser ? ((ICrossbowUser)user).getInfiniteAmmo() : new ItemStack(Items.ARROW)).copy();
+            else if(ammoLoaded > 0) ammo = ammoCopy.copy();
 
-            if(!loadProjectile(user, cap, ammo, isCreative || user instanceof ICrossbowUser && ((ICrossbowUser)user).infiniteAmmo() || Crossbow.Cfg.allowBowEnchantments
-            && user instanceof EntityPlayer && ammo.getItem() instanceof ItemArrow && ((ItemArrow)ammo.getItem()).isInfinite(ammo, crossbow, (EntityPlayer)user))) return false;
+            if(!loadProjectile(user, cap, ammo, isCreative || Crossbow.Cfg.allowBowEnchantments && user instanceof EntityPlayer
+            && ammo.getItem() instanceof ItemArrow && ((ItemArrow)ammo.getItem()).isInfinite(ammo, crossbow, (EntityPlayer)user))) return false;
         }
 
         return true;
