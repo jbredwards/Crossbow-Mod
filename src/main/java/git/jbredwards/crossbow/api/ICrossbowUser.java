@@ -47,31 +47,6 @@ public interface ICrossbowUser
     void setCharging(final boolean charging);
 
     /**
-     * @return True if this entity damages crossbows when firing them.
-     * @since 1.2.0
-     */
-    default boolean damagesCrossbow() {
-        return !(this instanceof IMob);
-    }
-
-    /**
-     * @return True if this entity has infinite crossbow ammo.
-     * @since 1.2.0
-     */
-    default boolean infiniteAmmo() {
-        return this instanceof IMob;
-    }
-
-    /**
-     * @return The fallback ammo ItemStack for when {@link ICrossbowUser#findAmmo} is empty and {@link ICrossbowUser#infiniteAmmo} is true.
-     * @since 1.2.0
-     */
-    @Nonnull
-    default ItemStack getInfiniteAmmo() {
-        return new ItemStack(Items.ARROW);
-    }
-
-    /**
      * Used by {@link ICrossbow#shoot}. Prepares the projectile to be fired. May be overriden.
      *
      * @throws NullPointerException If any parameters are null.
@@ -110,6 +85,31 @@ public interface ICrossbowUser
     default void performAICrossbowAttack(@Nonnull final EntityLivingBase user, final float velocity) {
         if(!ICrossbow.shootAll(user, user.getHeldItemMainhand(), velocity, 14 - user.world.getDifficulty().getId() * 4))
             ICrossbow.shootAll(user, user.getHeldItemOffhand(), velocity, 14 - user.world.getDifficulty().getId() * 4);
+    }
+
+    /**
+     * @return True if this entity damages crossbows when firing them.
+     * @since 1.2.0
+     */
+    default boolean damagesCrossbow() {
+        return !(this instanceof IMob);
+    }
+
+    /**
+     * @return True if this entity has infinite crossbow ammo.
+     * @since 1.2.0
+     */
+    default boolean infiniteAmmo() {
+        return this instanceof IMob;
+    }
+
+    /**
+     * @return The fallback ammo ItemStack for when {@link ICrossbowUser#findAmmo} is empty and {@link ICrossbowUser#infiniteAmmo} is true.
+     * @since 1.2.0
+     */
+    @Nonnull
+    default ItemStack getInfiniteAmmo() {
+        return new ItemStack(Items.ARROW);
     }
 
     /**

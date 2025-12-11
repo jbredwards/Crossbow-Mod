@@ -13,3 +13,6 @@ subtitles.crossbow.item.crossbow.charge=Crossbow charges up
 subtitles.crossbow.item.crossbow.hit=Arrow hits
 subtitles.crossbow.item.crossbow.load=Crossbow loads
 subtitles.crossbow.item.crossbow.shoot=Crossbow fires
+
+mod.crossbow.credits=\n- jbredwards: creator and maintainer\n- CleanroomMC: created TemplateDevEnv
+mod.crossbow.description=A mod that backports the Crossbow from the Village and Pillage update!

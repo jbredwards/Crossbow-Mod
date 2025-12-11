@@ -20,23 +20,28 @@ import git.jbredwards.crossbow.mod.common.capability.ICrossbowSoundData;
 import git.jbredwards.crossbow.mod.common.capability.util.EmptyStorage;
 import git.jbredwards.crossbow.mod.common.network.MessageSyncArrowData;
 import git.jbredwards.crossbow.mod.common.network.MessageSyncFireworkData;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraft.client.resources.I18n;
+import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.entity.item.EntityFireworkRocket;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
+import net.minecraftforge.client.resource.ISelectiveResourceReloadListener;
+import net.minecraftforge.client.resource.VanillaResourceType;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.*;
 import net.minecraftforge.fml.common.event.FMLConstructionEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -48,7 +53,9 @@ import javax.annotation.Nonnull;
  *
  */
 @Mod.EventBusSubscriber
-@Mod(modid = Crossbow.MODID, name = Crossbow.NAME, version = Crossbow.VERSION, dependencies = "required-client:assetmover@[2.5,);" +
+@Mod(modid = Crossbow.MODID, name = Crossbow.NAME, version = Crossbow.VERSION,
+guiFactory = "git.jbredwards.crossbow.mod.client.CrossbowGuiFactory",
+dependencies = "required-client:assetmover@[2.5,);" +
 "after:futuremc@[0.2.6,);after:spartanweaponry@[1.5.3,);") // Optional mod compatibility versions.
 public final class Crossbow
 {
@@ -67,15 +74,15 @@ public final class Crossbow
     }
 
     @SubscribeEvent
-    static void syncConfig(@Nonnull ConfigChangedEvent.OnConfigChangedEvent event) {
+    static void syncConfig(@Nonnull final ConfigChangedEvent.OnConfigChangedEvent event) {
         if(MODID.equals(event.getModID())) ConfigManager.sync(MODID, Config.Type.INSTANCE);
     }
 
     @SideOnly(Side.CLIENT)
     @Mod.EventHandler
-    static void constructClient(@Nonnull FMLConstructionEvent event) {
+    static void constructClient(@Nonnull final FMLConstructionEvent event) {
         CrossbowArmPose.init();
-        //download vanilla assets
+        // Download vanilla assets.
         AssetMoverAPI.fromMinecraft("1.18.2", ImmutableMap.<String, String>builder()
                 .put("assets/minecraft/sounds/item/crossbow/loading_end.ogg", "assets/crossbow/sounds/loading_end.ogg")
                 .put("assets/minecraft/sounds/item/crossbow/loading_middle1.ogg", "assets/crossbow/sounds/loading_middle1.ogg")
@@ -103,8 +110,8 @@ public final class Crossbow
     }
 
     @Mod.EventHandler
-    static void preInit(@Nonnull FMLPreInitializationEvent event) {
-        //register capabilities
+    static void preInit(@Nonnull final FMLPreInitializationEvent event) {
+        // Register capabilities.
         CapabilityManager.INSTANCE.register(ICrossbowAmmo.class, new EmptyStorage<>(), () -> (user, crossbow, projectile) -> null);
         MinecraftForge.EVENT_BUS.register(CapabilityCrossbowAmmo.class);
         CapabilityManager.INSTANCE.register(ICrossbowArrowData.class, ICrossbowArrowData.Storage.INSTANCE, ICrossbowArrowData.Impl::new);
@@ -116,21 +123,32 @@ public final class Crossbow
         CapabilityManager.INSTANCE.register(ICrossbowSoundData.class, new EmptyStorage<>(), ICrossbowSoundData.Impl::new);
         MinecraftForge.EVENT_BUS.register(ICrossbowSoundData.class);
 
-        //register packets
+        // Register packets.
         WRAPPER.registerMessage(MessageSyncArrowData.Handler.INSTANCE, MessageSyncArrowData.class, 0, Side.CLIENT);
         WRAPPER.registerMessage(MessageSyncFireworkData.Handler.INSTANCE, MessageSyncFireworkData.class, 1, Side.CLIENT);
     }
 
     @SideOnly(Side.CLIENT)
     @Mod.EventHandler
-    static void preInitClient(@Nonnull FMLPreInitializationEvent event) {
-        //builtin ammo model renders
+    static void preInitClient(@Nonnull final FMLPreInitializationEvent event) {
+        // Built-in ammo model renders.
         ICrossbowAmmo.AMMO_MODELS.add(new ModelResourceLocation(new ResourceLocation(Crossbow.MODID, "crossbow"), "arrow"));
         ICrossbowAmmo.AMMO_MODELS.add(new ModelResourceLocation(new ResourceLocation(Crossbow.MODID, "crossbow"), "firework"));
         ICrossbowAmmo.AMMO_MODELS.add(new ModelResourceLocation(new ResourceLocation(Crossbow.MODID, "crossbow"), "spectral_arrow"));
         ICrossbowAmmo.AMMO_MODELS.add(new ModelResourceLocation(new ResourceLocation(Crossbow.MODID, "crossbow"), "tipped_arrow"));
 
-        //register renderer handlers
+        // Mod gui entry improvements.
+        @Nonnull final ModMetadata metadata = event.getModMetadata();
+        @Nonnull final String creditsKey = metadata.credits, descKey = metadata.description;
+        ReflectionHelper.setPrivateValue(FMLModContainer.class, (FMLModContainer)Loader.instance().activeModContainer(), ModContainer.Disableable.NEVER, "disableability");
+        ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener((ISelectiveResourceReloadListener)(manager, condition) -> {
+            if(condition.test(VanillaResourceType.LANGUAGES)) {
+                metadata.credits = I18n.format(creditsKey).replace("\\n", "\n");
+                metadata.description = I18n.format(descKey);
+            }
+        });
+
+        // Register renderer handlers.
         ModelLoaderRegistry.registerLoader(CrossbowModel.Loader.INSTANCE);
         RenderingRegistry.registerEntityRenderingHandler(EntityFireworkRocket.class, RenderFirework::new);
     }
