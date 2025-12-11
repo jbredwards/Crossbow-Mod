@@ -5,6 +5,7 @@
 
 package git.jbredwards.crossbow.mod.asm.transformer;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Predicates;
 import git.jbredwards.crossbow.api.FireworkImpactEvent;
 import git.jbredwards.crossbow.api.ICrossbowProjectile;
@@ -148,7 +149,7 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
                         if(insn.getOpcode() == GETSTATIC && ((FieldInsnNode)insn).name.equals(FMLLaunchHandler.isDeobfuscatedEnvironment() ? "FIREWORKS" : "field_191552_t")) {
                             if(index ++== 0) ASMHandler.LOGGER.debug("transforming - EntityFireworkRocket::dealExplosionDamage");
                             method.instructions.insertBefore(insn, new VarInsnNode(ALOAD, 0));
-                            method.instructions.insertBefore(insn, new MethodInsnNode(INVOKESTATIC, "git/jbredwards/crossbow/mod/asm/transformer/TransformerEntityFireworkRocket$Hooks", "fireworkDamageSource", "(Lnet/minecraft/entity/Entity;)Lnet/minecraft/util/DamageSource;", false));
+                            method.instructions.insertBefore(insn, new MethodInsnNode(INVOKESTATIC, "git/jbredwards/crossbow/mod/asm/transformer/TransformerEntityFireworkRocket$Hooks", "fireworkDamageSource", "(Lnet/minecraft/entity/item/EntityFireworkRocket;)Lnet/minecraft/util/DamageSource;", false));
                             method.instructions.remove(insn);
                             if(index == 2) break methods;
                         }
@@ -200,9 +201,9 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
         }
 
         @Nonnull
-        public static DamageSource fireworkDamageSource(@Nonnull Entity entity) {
-            final ICrossbowFireworkData cap = ICrossbowFireworkData.get(entity);
-            return cap != null ? new EntityDamageSourceIndirect(DamageSource.FIREWORKS.damageType, entity, cap.getOwner()).setExplosion() : DamageSource.FIREWORKS;
+        public static DamageSource fireworkDamageSource(@Nonnull EntityFireworkRocket firework) {
+            final Entity indirectSource = MoreObjects.firstNonNull(((Wrapper)firework).getShooter(), firework.boostedEntity);
+            return indirectSource != null ? new EntityDamageSourceIndirect(DamageSource.FIREWORKS.getDamageType(), firework, indirectSource).setExplosion() : DamageSource.FIREWORKS;
         }
 
         @SuppressWarnings({"Guava", "unchecked"})

@@ -41,6 +41,7 @@ public final class ASMHandler implements IFMLLoadingPlugin
                 new TransformerEntityArrow(),
                 new TransformerEntityFireworkRocket(),
                 new TransformerEntityLivingBase(),
+                new TransformerItemFirework(),
                 new TransformerModelBiped(),
                 new TransformerRenderPlayer(),
                 //modded
