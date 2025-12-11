@@ -208,7 +208,7 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
 
         @SuppressWarnings({"Guava", "unchecked"})
         public static void handleCollision(@Nonnull EntityFireworkRocket firework) {
-            if(firework.isEntityAlive()) {
+            if(firework.isEntityAlive() && (firework.boostedEntity == null || firework.getDataManager().get(EntityFireworkRocket.FIREWORK_ITEM).getSubCompound("Fireworks") != null)) {
                 final Vec3d start = new Vec3d(firework.posX, firework.posY, firework.posZ);
                 final Vec3d end = new Vec3d(firework.posX + firework.motionX, firework.posY + firework.motionY, firework.posZ + firework.motionZ);
 
