@@ -94,7 +94,19 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
                             method.instructions.insertBefore(insn, new MethodInsnNode(INVOKESTATIC, "git/jbredwards/crossbow/mod/asm/transformer/TransformerEntityFireworkRocket$Hooks", "correctVelocity", "(Lnet/minecraft/entity/Entity;)V", false));
                             method.instructions.insertBefore(insn, new VarInsnNode(ALOAD, 0));
                         }
-
+                        /*
+                         * onUpdate: (changes are around line 196)
+                         * Old code:
+                         * this.world.spawnParticle(EnumParticleTypes.FIREWORKS_SPARK, this.posX, this.posY - 0.3D, this.posZ, this.rand.nextGaussian() * 0.05D, -this.motionY * 0.5D, this.rand.nextGaussian() * 0.05D);
+                         *
+                         * New code:
+                         * // Don't offset firework particles
+                         * this.world.spawnParticle(EnumParticleTypes.FIREWORKS_SPARK, this.posX, this.posY - 0.0D, this.posZ, this.rand.nextGaussian() * 0.05D, -this.motionY * 0.5D, this.rand.nextGaussian() * 0.05D);
+                         */
+                        else if(insn.getOpcode() == LDC && ((LdcInsnNode)insn).cst.equals(0.3D)) {
+                            method.instructions.insert(insn, new InsnNode(DCONST_0));
+                            method.instructions.remove(insn);
+                        }
                         /*
                          * onUpdate: (changes are around line 204)
                          * Old code:
