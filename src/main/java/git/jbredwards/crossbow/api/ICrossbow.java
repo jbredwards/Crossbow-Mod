@@ -28,6 +28,7 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.EnumHelper;
 import net.minecraftforge.event.ForgeEventFactory;
 
@@ -192,8 +193,9 @@ public interface ICrossbow
                 world.playSound(null, user.posX, user.posY, user.posZ, getShootSound(user, crossbow, projectileEntity, multishotOffset), SoundCategory.PLAYERS, 1, soundPitch);
             }
 
-            world.spawnEntity((Entity)projectileEntity);
+            MinecraftForge.EVENT_BUS.post(new CreateCrossbowProjectileEvent.Post(user, crossbow, projectile, projectileEntity));
             if(!isCreative && (!(user instanceof ICrossbowUser) || ((ICrossbowUser)user).damagesCrossbow())) ammoHandler.damageCrossbow(user, crossbow, projectile);
+            world.spawnEntity((Entity)projectileEntity);
         }
     }
 
@@ -206,7 +208,12 @@ public interface ICrossbow
      */
     @Nullable
     default IProjectile createProjectileFromStack(@Nonnull World world, @Nonnull EntityLivingBase user, @Nonnull ItemStack crossbow, @Nonnull ItemStack projectile, @Nonnull ICrossbowAmmo ammoHandler, boolean isCreative, double multishotOffset) {
-        final IProjectile projectileEntity = ammoHandler.createCrossbowProjectile(user, crossbow, projectile);
+        final IProjectile projectileAsEntity = ammoHandler.createCrossbowProjectile(user, crossbow, projectile);
+        if(projectileAsEntity == null) return null;
+
+        // Let modders change the projectile entity if desired.
+        final CreateCrossbowProjectileEvent.Pre event = new CreateCrossbowProjectileEvent.Pre(user, crossbow, projectile, projectileAsEntity);
+        final IProjectile projectileEntity = MinecraftForge.EVENT_BUS.post(event) ? event.newProjectileEntity : event.projectileAsEntity;
 
         // Apply data to arrow if applicable.
         final ICrossbowArrowData arrowData = ICrossbowArrowData.get((Entity)projectileEntity);
@@ -312,6 +319,6 @@ public interface ICrossbow
      * @since 1.2.0
      */
     static int getFiringSoundPitchIndex(int projectileIndex) {
-        return projectileIndex > 0 ? ((projectileIndex & 2) >> 1) + 1 : 0;
+        return projectileIndex > 0 ? (projectileIndex & 1) == 0 ? 2 : 1 : 0;
     }
 }
