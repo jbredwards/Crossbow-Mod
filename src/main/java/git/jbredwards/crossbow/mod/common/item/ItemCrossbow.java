@@ -1,6 +1,17 @@
 /*
- * Copyright (c) 2023. jbredwards
- * All rights reserved.
+ * Copyright (C) <2025 to Present> <jbredwards>
+ *
+ * All rights are reserved, except where explicitly granted by the original
+ * copyright holder or where explicitly granted by the Mod Permissions License as
+ * published by Jbredwards, either version 1 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.
+ *
+ * See the Mod Permissions License for more details
+ * <https://www.github.com/jbredwards/mod-permissions-license>.
  */
 
 package git.jbredwards.crossbow.mod.common.item;
@@ -29,6 +40,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.event.ForgeEventFactory;
@@ -215,7 +227,8 @@ public class ItemCrossbow extends Item implements ICrossbow
             }
 
             for(@Nonnull final MutablePair<Integer, ItemStack> counted : sorted) {
-                tooltip.add(I18n.format("tooltip.crossbow.crossbow.projectile", TextFormatting.RESET + (counted.left == 1 ? "" : counted.left + " x ") + counted.right.getTextComponent().getFormattedText()));
+                @Nonnull final String projectile = counted.right.getTextComponent().getUnformattedText().trim();
+                tooltip.add(I18n.format("tooltip.crossbow.crossbow.projectile", TextFormatting.RESET + (counted.left == 1 ? "" : counted.left + " x ") + projectile));
 
                 final List<String> subTooltip = new LinkedList<>();
                 counted.right.getItem().addInformation(counted.right, worldIn, subTooltip, flagIn);

@@ -1,6 +1,17 @@
 /*
- * Copyright (c) 2025. jbredwards
- * All rights reserved.
+ * Copyright (C) <2025 to Present> <jbredwards>
+ *
+ * All rights are reserved, except where explicitly granted by the original
+ * copyright holder or where explicitly granted by the Mod Permissions License as
+ * published by Jbredwards, either version 1 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.
+ *
+ * See the Mod Permissions License for more details
+ * <https://www.github.com/jbredwards/mod-permissions-license>.
  */
 
 package git.jbredwards.crossbow.api;
@@ -15,7 +26,7 @@ import javax.annotation.Nullable;
  * <p>
  * This interface is automatically applied to
  * {@link net.minecraft.entity.projectile.EntityArrow EntityArrow} and {@link net.minecraft.entity.item.EntityFireworkRocket EntityFireworkRocket}
- * at runtime, which both delegate to {@link git.jbredwards.crossbow.mod.common.capability.ICrossbowArrowData ICrossbowArrowData} and
+ * at runtime, whose implementations both delegate to {@link git.jbredwards.crossbow.mod.common.capability.ICrossbowArrowData ICrossbowArrowData} and
  * {@link git.jbredwards.crossbow.mod.common.capability.ICrossbowFireworkData ICrossbowFireworkData} by default.
  * </p>
  *

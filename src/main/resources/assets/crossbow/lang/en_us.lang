@@ -1,3 +1,8 @@
+config.crossbow.allowBowEnchantments=Allow Bow Enchantments
+config.crossbow.allowBowEnchantments.tooltip=Enchantments for bows may also be applied to crossbows. §rNote: only the Vanilla bow enchantments (flame, infinity, power, punch) have built-in support. So expect some modded bow enchantments to not work properly if they require the same treatment.
+config.crossbow.replaceFireworkDispenseBehavior=Replace Firework Dispense Behavior
+config.crossbow.replaceFireworkDispenseBehavior.tooltip=Apply the improved firework dispenser behavior from snapshot 19w36a.
+
 enchantment.crossbow.multishot=Multishot
 enchantment.crossbow.multishot.desc=Fires additional arrows in similar directions.
 enchantment.crossbow.piercing=Piercing

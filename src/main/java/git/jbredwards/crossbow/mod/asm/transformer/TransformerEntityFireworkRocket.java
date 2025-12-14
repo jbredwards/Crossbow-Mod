@@ -1,11 +1,21 @@
 /*
- * Copyright (c) 2023. jbredwards
- * All rights reserved.
+ * Copyright (C) <2025 to Present> <jbredwards>
+ *
+ * All rights are reserved, except where explicitly granted by the original
+ * copyright holder or where explicitly granted by the Mod Permissions License as
+ * published by Jbredwards, either version 1 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.
+ *
+ * See the Mod Permissions License for more details
+ * <https://www.github.com/jbredwards/mod-permissions-license>.
  */
 
 package git.jbredwards.crossbow.mod.asm.transformer;
 
-import com.google.common.base.MoreObjects;
 import com.google.common.base.Predicates;
 import git.jbredwards.crossbow.api.FireworkImpactEvent;
 import git.jbredwards.crossbow.api.ICrossbowProjectile;
@@ -202,7 +212,8 @@ public final class TransformerEntityFireworkRocket implements IClassTransformer,
 
         @Nonnull
         public static DamageSource fireworkDamageSource(@Nonnull EntityFireworkRocket firework) {
-            final Entity indirectSource = MoreObjects.firstNonNull(((Wrapper)firework).getShooter(), firework.boostedEntity);
+            Entity indirectSource = ((Wrapper)firework).getShooter();
+            if(indirectSource == null) indirectSource = firework.boostedEntity;
             return indirectSource != null ? new EntityDamageSourceIndirect(DamageSource.FIREWORKS.getDamageType(), firework, indirectSource).setExplosion() : DamageSource.FIREWORKS;
         }
 
